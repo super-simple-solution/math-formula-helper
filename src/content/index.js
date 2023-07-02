@@ -7,11 +7,15 @@ const hiddenEl = createEle({
 })
 document.body.appendChild(hiddenEl)
 
-setTimeout(() => list('.hidden-el'), 3000)
+const handler = () => {
+  list('.hidden-el')
+}
+
+setTimeout(() => handler(), 3000)
 
 const rules = {
   zhihu: {
-    selector: '.MathJax_SVG',
+    selector: 'MathJax_SVG',
     parser: (el) => {
       console.log(el.getAttribute('data-mathml'))
     },
@@ -19,22 +23,24 @@ const rules = {
 }
 
 function createCopyIcon(target) {
-  const span = document.createElement('span')
-  span.textContent = 'copy'
-  span.className = 'sss-copy'
-  target.appendChild(span)
+  const img = document.createElement('img')
+  img.src = '/public/assets/images/copy.png'
+  img.className = 'sss-copy'
+  target.appendChild(img)
 }
 
 document.addEventListener('mouseover', (e) => {
   const target = e.target
-  if (target.className.contains(rules.zhihu.selector)) {
+  console.log(target, 'target')
+  if (target.classList?.contains(rules.zhihu.selector)) {
     createCopyIcon(target)
+    console.log(target, 44)
   }
 })
 
 document.addEventListener('click', (e) => {
   const target = e.target
-  if (target.className.contains('sss-copy')) {
+  if (target.classList?.contains('sss-copy')) {
     rules.zhihu.parser(target)
   }
 })

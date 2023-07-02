@@ -18,6 +18,7 @@
       "js": [
         "src/content/index.js"
       ],
+      "css": [],
       "run_at": "document_idle",
       "matches": [
         "<all_urls>"
