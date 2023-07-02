@@ -23,18 +23,16 @@ const rules = {
 }
 
 function createCopyIcon(target) {
-  const img = document.createElement('img')
-  img.src = '/public/assets/images/copy.png'
-  img.className = 'sss-copy'
-  target.appendChild(img)
+  const span = document.createElement('span')
+  span.textContent = 'copy'
+  span.className = 'sss-copy'
+  target.appendChild(span)
 }
 
 document.addEventListener('mouseover', (e) => {
   const target = e.target
-  console.log(target, 'target')
   if (target.classList?.contains(rules.zhihu.selector)) {
     createCopyIcon(target)
-    console.log(target, 44)
   }
 })
 
