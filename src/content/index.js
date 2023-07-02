@@ -24,14 +24,13 @@ const rules = {
 
 function createCopyIcon(target) {
   const span = document.createElement('span')
-  span.textContent = 'copy'
   span.className = 'sss-copy'
   target.appendChild(span)
 }
 
 document.addEventListener('mouseover', (e) => {
   const target = e.target
-  if (target.classList?.contains(rules.zhihu.selector)) {
+  if (target.classList?.contains(rules.zhihu.selector) && !target.querySelector('sss-copy')) {
     createCopyIcon(target)
   }
 })
