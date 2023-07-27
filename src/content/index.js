@@ -1,12 +1,14 @@
 const rules = {
   zhihu: {
-    selector: '.MathJax_SVG, .MathJax',
+    selector: '.MathJax_Preview + .MathJax_SVG_Display, .MathJax_Preview + .MathJax_SVG, .MathJax',
     parser: (el) => {
+      if (!el) return
       const scriptEl = el.nextElementSibling
       if (scriptEl.tagName === 'SCRIPT' && scriptEl.type.includes('math/tex')) {
-        console.log('math res', scriptEl.textContent.trim())
+        const mathContent = scriptEl.textContent.trim()
+        if (!mathContent.length) return
         // https://web.dev/async-clipboard/
-        navigator.clipboard.writeText(scriptEl.textContent.trim()).then(() => {
+        navigator.clipboard.writeText(mathContent).then(() => {
           el.classList.add('sss-copyed')
           el.addEventListener(
             'mouseout',
@@ -21,9 +23,13 @@ const rules = {
   },
 }
 
-document.addEventListener('click', (e) => {
-  const target = e.target
-  const finalTarget = target.closest(rules.zhihu.selector)
-  if (!finalTarget) return
-  rules.zhihu.parser(finalTarget)
-})
+function init() {
+  document.addEventListener('click', (e) => {
+    const target = e.target
+    const finalTarget = target.closest(rules.zhihu.selector)
+    if (!finalTarget) return
+    rules.zhihu.parser(finalTarget)
+  })
+}
+
+init()
