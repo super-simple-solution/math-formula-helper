@@ -1,8 +1,8 @@
 {
-  "name": "vue3-chrome-templatet",
+  "name": "latex copy",
   "version": "0.1",
   "manifest_version": 3,
-  "description": "*****description*****",
+  "description": "copy latex from webpage",
   "icons": {
     "16": "assets/icons/icon16.png",
     "32": "assets/icons/icon32.png",
@@ -13,11 +13,18 @@
   "content_security_policy":{
     "extension_page": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
+  "background": {
+    "service_worker": "src/service_worker.js",
+    "type": "module"
+  },
+  "permissions": ["scripting", "activeTab"],
+  "host_permissions":  [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
       "js": [
-        "src/content/index.js",
-        "src/style/index.scss"
+        "src/content/index.js"
       ],
       "css": [
       ],

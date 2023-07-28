@@ -1,6 +1,8 @@
+import { selectorList } from './const'
+
 const rules = {
   zhihu: {
-    selector: '.MathJax_Preview + .MathJax_SVG_Display, .MathJax_Preview + .MathJax_SVG, .MathJax',
+    selector: selectorList.join(),
     parser: (el) => {
       if (!el) return
       const scriptEl = el.nextElementSibling
@@ -24,12 +26,18 @@ const rules = {
 }
 
 function init() {
+  const selector = rules.zhihu.selector
+  if (!document.querySelector(selector)) return
+  // inject css
+  chrome.runtime.sendMessage({
+    greeting: 'insert-css',
+  })
   document.addEventListener('click', (e) => {
     const target = e.target
-    const finalTarget = target.closest(rules.zhihu.selector)
+    const finalTarget = target.closest(selector)
     if (!finalTarget) return
     rules.zhihu.parser(finalTarget)
   })
 }
-
-init()
+setTimeout(init, 1000)
+// init()
