@@ -1,6 +1,7 @@
 import { selectorList } from '../content/const'
 const containerStyle = `{
   position: relative;
+  cursor: pointer;
 }`
 
 // :after
