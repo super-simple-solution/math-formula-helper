@@ -6,13 +6,10 @@ const contentReq = {
 }
 
 function insertCSS(_, __, tabId) {
-  chrome.scripting.insertCSS(
-    {
-      css: generateCSS(),
-      target: { tabId },
-    },
-    () => console.log('injectres', tabId),
-  )
+  chrome.scripting.insertCSS({
+    css: generateCSS(),
+    target: { tabId },
+  })
 }
 
 initEventHandler(contentReq)

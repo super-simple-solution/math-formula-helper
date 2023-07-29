@@ -28,14 +28,15 @@ const copyedStyle = `{
 function generateCSS() {
   let cssStr = ''
   cssStr += selectorList.join() + containerStyle
-  cssStr += geneClass(selectorList, ':after,') + copyStyle
-  cssStr += geneClass(selectorList, ':hover:after,') + copyHoverStyle
-  cssStr += geneClass(selectorList, '.sss-copyed:after,') + copyedStyle
+  cssStr += geneClass(selectorList, ':after') + copyStyle
+  cssStr += geneClass(selectorList, ':hover:after') + copyHoverStyle
+  cssStr += geneClass(selectorList, '.sss-copyed:after') + copyedStyle
   return cssStr
 }
 
 function geneClass(classList, str = '') {
-  return classList.reduce((cur, acc) => cur + acc + str, '')
+  const len = classList.length
+  return classList.reduce((cur, acc, curIndex) => cur + acc + str + (curIndex === len - 1 ? '' : ','), '')
 }
 
 export default generateCSS
