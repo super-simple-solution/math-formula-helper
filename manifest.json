@@ -11,7 +11,7 @@
     "128": "assets/icons/128.png"
   },
   "content_security_policy":{
-    "extension_page": "script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; object-src 'self'"
+    "extension_page": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "background": {
     "service_worker": "src/service_worker.js",
