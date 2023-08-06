@@ -19,5 +19,8 @@
     "vite": "^4.3.9",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-style-import": "^1.4.1"
+  },
+  "dependencies": {
+    "mathml-to-latex": "^1.2.0"
   }
 }

@@ -1,4 +1,6 @@
-import { injectScriptByUrl } from '@/utils/extension-action.js'
+// import { injectScriptByUrl } from '@/utils/extension-action.js'
+import Mathml2latex from 'mathml-to-latex'
+
 const rules = {
   // math_jax: {
   //   selectorList: ['.MathJax_Preview + .MathJax_SVG_Display', '.MathJax_Preview + .MathJax_SVG', '.MathJax'],
@@ -49,21 +51,20 @@ const rules = {
     selectorList: ['mjx-container.MathJax'],
     parser: (el) => {
       if (!el) return
-      injectScriptByUrl('https://cdn.jsdelivr.net/npm/mathml2latex@1.1.3/lib/mathml2latex.browser.cjs.min.js')
+      // injectScriptByUrl('https://cdn.jsdelivr.net/npm/mathml2latex@1.1.3/lib/mathml2latex.browser.cjs.min.js')
       const mathEl = el.querySelector('[data-mml-node="math"]')
-      setTimeout(() => {
-        const latex = window.MathML2LaTeX.convert(mathEl.outerHTML)
-        navigator.clipboard.writeText(latex).then(() => {
-          el.classList.add('sss-copyed')
-          el.addEventListener(
-            'mouseout',
-            () => {
-              setTimeout(() => el.classList.remove('sss-copyed'), 500)
-            },
-            { once: true },
-          )
-        })
-      }, 500)
+      // MathML2LaTeX
+      const latex = Mathml2latex.convert(mathEl.outerHTML)
+      navigator.clipboard.writeText(latex).then(() => {
+        el.classList.add('sss-copyed')
+        el.addEventListener(
+          'mouseout',
+          () => {
+            setTimeout(() => el.classList.remove('sss-copyed'), 500)
+          },
+          { once: true },
+        )
+      })
     },
   },
 }
