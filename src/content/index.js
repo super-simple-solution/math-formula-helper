@@ -25,9 +25,14 @@ const rules = {
   },
 }
 
+let count = 0
 function init() {
   const selector = rules.zhihu.selector
-  if (!document.querySelector(selector)) return
+  if (count > 5) return
+  count++
+  if (!document.querySelector(selector)) {
+    setTimeout(init, 1000)
+  }
   // inject css
   chrome.runtime.sendMessage({
     greeting: 'insert-css',
@@ -39,5 +44,4 @@ function init() {
     rules.zhihu.parser(finalTarget)
   })
 }
-setTimeout(init, 1000)
-// init()
+init()
