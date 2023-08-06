@@ -47,14 +47,13 @@ const rules = {
       }
     },
   },
-  math_jax_svg: {
+  math_jax_html: {
     selectorList: ['mjx-container.MathJax'],
     parser: (el) => {
       if (!el) return
-      // injectScriptByUrl('https://cdn.jsdelivr.net/npm/mathml2latex@1.1.3/lib/mathml2latex.browser.cjs.min.js')
-      const mathEl = el.querySelector('[data-mml-node="math"]')
+      const mathEl = el.querySelector('mjx-math + mjx-assistive-mml')
       // MathML2LaTeX
-      const latex = Mathml2latex.convert(mathEl.outerHTML)
+      const latex = Mathml2latex.convert(mathEl.innerHTML)
       navigator.clipboard.writeText(latex).then(() => {
         el.classList.add('sss-copyed')
         el.addEventListener(
