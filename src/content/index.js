@@ -3,7 +3,12 @@ import { copyLatex } from './util'
 
 const rules = {
   math_jax: {
-    selectorList: ['.MathJax_Preview + .MathJax_SVG_Display', '.MathJax_Preview + .MathJax_SVG', '.MathJax'],
+    testUrl: ['https://www.andlearning.org/math-formula/', '', 'https://zhuanlan.zhihu.com/p/115277553'],
+    selectorList: [
+      '.MathJax_Preview + .MathJax',
+      '.MathJax_Preview + .MathJax_SVG_Display',
+      '.MathJax_Preview + .MathJax_SVG',
+    ],
     parser: (el) => {
       if (!el) return
       const scriptEl = el.nextElementSibling
@@ -15,6 +20,7 @@ const rules = {
     },
   },
   math_ml: {
+    testUrl: ['https://juejin.cn/post/7210175991837507621'],
     selectorList: ['.math .katex'],
     parser: (el) => {
       if (!el) return
@@ -28,6 +34,7 @@ const rules = {
     },
   },
   math_jax_html: {
+    testUrl: ['https://www.mathreference.org/'],
     selectorList: ['mjx-container.MathJax'],
     parser: (el) => {
       if (!el) return
