@@ -5,9 +5,9 @@ const contentReq = {
   'insert-css': insertCSS,
 }
 
-function insertCSS(_, __, tabId) {
+function insertCSS(data, __, tabId) {
   chrome.scripting.insertCSS({
-    css: generateCSS(),
+    css: generateCSS(data),
     target: { tabId },
   })
 }
