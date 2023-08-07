@@ -7,11 +7,12 @@ const isVIP = true
 
 const rules = {
   math_jax: {
-    testUrl: ['https://www.andlearning.org/math-formula/', '', 'https://zhuanlan.zhihu.com/p/115277553'],
+    testUrl: ['https://www.andlearning.org/math-formula/', 'https://zhuanlan.zhihu.com/p/115277553'],
     selectorList: [
       '.MathJax_Preview + .MathJax',
       '.MathJax_Preview + .MathJax_SVG_Display',
       '.MathJax_Preview + .MathJax_SVG',
+      '.MathJax_Preview + .MathJax_Display',
     ],
     parser: (el) => {
       if (!el) return
