@@ -1,10 +1,9 @@
 lockfileVersion: '6.0'
 
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
-
 dependencies:
+  clipboard-polyfill:
+    specifier: ^4.0.0
+    version: 4.0.0
   mathml-to-latex:
     specifier: ^1.2.0
     version: 1.2.0
@@ -597,6 +596,10 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
+
+  /clipboard-polyfill@4.0.0:
+    resolution: {integrity: sha512-U4KPNJqAYuyOtixCZZUyWTcj+wlI66j07g5ggMRE2DR1VFu/3ZWXkjLAslmme8i065gBSCUblHET7DKQ2Xg3RA==}
+    dev: false
 
   /color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -2022,3 +2025,7 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false

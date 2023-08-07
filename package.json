@@ -21,6 +21,7 @@
     "vite-plugin-style-import": "^1.4.1"
   },
   "dependencies": {
+    "clipboard-polyfill": "^4.0.0",
     "mathml-to-latex": "^1.2.0",
     "toastify-js": "^1.12.0"
   }

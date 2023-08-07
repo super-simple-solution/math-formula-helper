@@ -1,5 +1,4 @@
-import { copyLatex, svgToImage, addCopiedStyle } from './util'
-import Toastify from 'toastify-js'
+import { initClipboard, copyLatex, copyLatexAsImage, svgToImage } from './util'
 
 let Mathml2latex
 
@@ -25,8 +24,11 @@ const rules = {
     },
   },
   math_ml: {
-    testUrl: ['https://juejin.cn/post/7210175991837507621'],
-    selectorList: ['.math .katex'],
+    testUrl: [
+      'https://juejin.cn/post/7210175991837507621',
+      'http://wujiawen.xyz/posts/notes/articles/%E7%AC%94%E8%AE%B0llama_note.html',
+    ],
+    selectorList: ['.katex'],
     parser: (el) => {
       if (!el) return
       const annotationEl = el.querySelector('.katex-mathml annotation')
@@ -53,18 +55,7 @@ const rules = {
           if (isVIP) {
             // TODO: send blob to server
           } else {
-            navigator.clipboard
-              .write([
-                new ClipboardItem({
-                  [blob.type]: blob,
-                }),
-              ])
-              .then(() => {
-                addCopiedStyle(el)
-                Toastify({
-                  text: 'Image copied',
-                }).showToast()
-              })
+            copyLatexAsImage(blob, el)
           }
         })
         return
@@ -75,6 +66,27 @@ const rules = {
       copyLatex(latexContent, el)
     },
   },
+  math_img: {
+    testUrl: ['https://zh.wikipedia.org/wiki/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95'],
+    selectorList: ['.mwe-math-element'],
+    parser: (el) => {
+      if (!el) return
+      const imgEl = el.querySelector('img')
+      if (!imgEl) return
+      if (!imgEl.alt) return
+      copyLatex(imgEl.alt, el)
+    },
+  },
+  // wolfram_math_img: {
+  //   testUrl: ['https://mathworld.wolfram.com/HilbertSpace.html'],
+  //   selectorList: ['img.numberedequation'],
+  //   parser: (el) => {
+  //     if (!el) return
+  //     if (!el.alt) return
+  //     TODO: el.alt is TexForm, not latex
+  //     copyLatex(el.alt, el)
+  //   },
+  // },
 }
 
 let count = 0
@@ -88,6 +100,7 @@ async function init() {
     setTimeout(init, 1000)
     return
   }
+  initClipboard()
   chrome.runtime.sendMessage({
     greeting: 'insert-css',
     data: rule.selectorList,

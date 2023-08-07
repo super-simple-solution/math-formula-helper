@@ -7,6 +7,8 @@ const containerStyle = `{
 const copyStyle = `{
   content: ' ';
   position: absolute;
+  top: 0;
+  right: 0;
   display: inline-block;
   visibility: hidden;
   width: 10px;

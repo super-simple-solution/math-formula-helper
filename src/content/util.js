@@ -1,6 +1,27 @@
+let clipboard = navigator.clipboard
+
+export async function initClipboard() {
+  // http webpage cannot use native clipboard api
+  if (!clipboard) {
+    clipboard = await import('clipboard-polyfill')
+  }
+}
+
 export function copyLatex(latexContent, el) {
   // https://web.dev/async-clipboard/
-  navigator.clipboard.writeText(latexContent).then(() => addCopiedStyle(el))
+  clipboard.writeText(latexContent).then(() => addCopiedStyle(el))
+}
+
+export function copyLatexAsImage(latexBlob, el) {
+  clipboard
+    .write([
+      new ClipboardItem({
+        [latexBlob.type]: latexBlob,
+      }),
+    ])
+    .then(() => {
+      addCopiedStyle(el)
+    })
 }
 
 export function addCopiedStyle(el) {
@@ -14,7 +35,7 @@ export function addCopiedStyle(el) {
   )
 }
 
-export function svgToImage(svgElement, needDownload) {
+export function svgToImage(svgElement) {
   let { clientWidth: width, clientHeight: height } = svgElement
   let clonedSvgElement = svgElement.cloneNode(true)
   let outerHTML = clonedSvgElement.outerHTML
@@ -32,11 +53,7 @@ export function svgToImage(svgElement, needDownload) {
     context.scale(devicePixelRatio, devicePixelRatio)
     // draw image in canvas starting left-0 , top - 0
     context.drawImage(image, 0, 0, width, height)
-    if (needDownload) {
-      return getCanvasBlob(canvas)
-    } else {
-      return getCanvasBlob(canvas)
-    }
+    return getCanvasBlob(canvas)
   })
 }
 
