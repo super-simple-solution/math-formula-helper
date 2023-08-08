@@ -2,7 +2,7 @@ import { initClipboard, copyLatex, copyLatexAsImage, svgToImage } from './util'
 
 let Mathml2latex
 
-const isVIP = true
+const isVIP = false
 
 const rules = {
   math_jax: {
