@@ -1,17 +1,19 @@
 import { initClipboard } from './util'
-import { rules } from 'const'
+import { rules } from './const'
 
 let count = 0
 let inited = false
-async function init(resetCount = false) {
+function init(resetCount) {
+  if (inited) return
   if (resetCount) count = 0
+  if (document.visibilityState === 'hidden') return
   const rule = Object.values(rules).find((item) => {
     return document.querySelector(item.selectorList.join())
   })
   if (count > 5) return
   count++
   if (!rule) {
-    setTimeout(init, 1000)
+    setTimeout(init, 2000)
     return
   }
   inited = true
@@ -21,9 +23,9 @@ async function init(resetCount = false) {
     data: rule.selectorList,
   })
   if (rule.key === 'math_jax_html') {
-    window.Mathml2latex = await import('mathml-to-latex')
+    import('mathml-to-latex').then((res) => (window.Mathml2latex = res))
   }
-  document.addEventListener('click', (e) => {
+  document.body.addEventListener('click', (e) => {
     const target = e.target
     const finalTarget = target.closest(rule.selectorList.join())
     if (!finalTarget) return

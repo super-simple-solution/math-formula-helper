@@ -1,9 +1,9 @@
 let clipboard = navigator.clipboard
 
-export async function initClipboard() {
+export function initClipboard() {
   // http webpage cannot use native clipboard api
   if (!clipboard) {
-    clipboard = await import('clipboard-polyfill')
+    import('clipboard-polyfill').then((res) => (clipboard = res))
   }
 }
 
