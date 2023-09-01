@@ -15,7 +15,7 @@ export const rules = {
       if (!el) return
       const scriptEl = el.nextElementSibling
       if (scriptEl.tagName === 'SCRIPT' && scriptEl.type.includes('math/tex')) {
-        const latexContent = scriptEl.textContent.trim()
+        const latexContent = scriptEl.innerText.trim()
         if (!latexContent.length) return
         copyLatex(latexContent, el)
       }
@@ -32,7 +32,7 @@ export const rules = {
       const annotationEl = el.querySelector('.katex-mathml annotation')
       // 获取数学公式dom及属性
       if (annotationEl.getAttribute('encoding').includes('application/x-tex')) {
-        const latexContent = annotationEl.textContent.trim()
+        const latexContent = annotationEl.innerText.trim()
         if (!latexContent.length) return
         copyLatex(latexContent, el)
       }
