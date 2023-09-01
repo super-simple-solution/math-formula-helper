@@ -15,9 +15,9 @@ export const rules = {
       if (!el) return
       const scriptEl = el.nextElementSibling
       if (scriptEl.tagName === 'SCRIPT' && scriptEl.type.includes('math/tex')) {
-        const latexContent = scriptEl.innerText.trim()
+        const latexContent = scriptEl.textContent.trim()
         if (!latexContent.length) return
-        copyLatex(latexContent, el)
+        copyLatex(latexRefine(latexContent), el)
       }
     },
   },
@@ -32,9 +32,9 @@ export const rules = {
       const annotationEl = el.querySelector('.katex-mathml annotation')
       // 获取数学公式dom及属性
       if (annotationEl.getAttribute('encoding').includes('application/x-tex')) {
-        const latexContent = annotationEl.innerText.trim()
+        const latexContent = annotationEl.textContent.trim()
         if (!latexContent.length) return
-        copyLatex(latexContent, el)
+        copyLatex(latexRefine(latexContent), el)
       }
     },
   },
@@ -61,7 +61,7 @@ export const rules = {
       // MathML2LaTeX
       if (!window.Mathml2latex) return
       const latexContent = window.Mathml2latex.convert(mathEl.innerHTML)
-      copyLatex(latexContent, el)
+      copyLatex(latexRefine(latexContent), el)
     },
   },
   math_img: {
@@ -85,4 +85,11 @@ export const rules = {
   //     copyLatex(el.alt, el)
   //   },
   // },
+}
+
+function latexRefine(content) {
+  if (content.includes('\\\\')) {
+    return `\\begin{array}{c} ${content} \\end{array}`
+  }
+  return content.replace(/&nbsp;/g, '\\enspace ')
 }
