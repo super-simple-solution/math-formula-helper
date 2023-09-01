@@ -23,7 +23,9 @@ function init(resetCount) {
     data: rule.selectorList,
   })
   if (rule.key === 'math_jax_html') {
-    import('mathml-to-latex').then((res) => (window.Mathml2latex = res))
+    import('mathml-to-latex').then((res) => {
+      window.Mathml2latex = res.MathMLToLaTeX
+    })
   }
   document.body.addEventListener('click', (e) => {
     const target = e.target

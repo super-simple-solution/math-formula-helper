@@ -44,7 +44,7 @@ export const rules = {
     selectorList: ['mjx-container.MathJax'],
     parser: (el) => {
       if (!el) return
-      const mathEl = el.querySelector('mjx-math + mjx-assistive-mml')
+      const mathEl = el.querySelector('mjx-assistive-mml')
       // svg with no content
       if (!mathEl) {
         const svgEl = el.querySelector('svg')

@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "clipboard-polyfill": "^4.0.0",
-    "mathml-to-latex": "^1.2.0",
-    "toastify-js": "^1.12.0"
+    "mathml-to-latex": "^1.3.0"
   }
 }
