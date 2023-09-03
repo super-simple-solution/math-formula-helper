@@ -88,7 +88,7 @@ export const rules = {
 }
 
 function latexRefine(content) {
-  if (content.includes('\\\\')) {
+  if (content.includes('\\\\') && !content.startsWith('\\begin')) {
     return `\\begin{array}{c} ${content} \\end{array}`
   }
   return content.replace(/&nbsp;/g, '\\enspace ')
