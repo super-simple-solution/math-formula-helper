@@ -4,12 +4,17 @@ const isVIP = false
 
 export const rules = {
   math_jax: {
-    testUrl: ['https://www.andlearning.org/math-formula/', 'https://zhuanlan.zhihu.com/p/115277553'],
+    testUrl: [
+      'https://www.andlearning.org/math-formula/',
+      'https://zhuanlan.zhihu.com/p/115277553',
+      'https://wuli.wiki/online/ODEa1.html',
+    ],
     selectorList: [
       '.MathJax_Preview + .MathJax',
       '.MathJax_Preview + .MathJax_SVG_Display',
       '.MathJax_Preview + .MathJax_SVG',
       '.MathJax_Preview + .MathJax_Display',
+      '.MathJax_Preview + .MathJax_CHTML',
     ],
     parser: (el) => {
       if (!el) return
