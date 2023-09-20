@@ -15,6 +15,7 @@ export const rules = {
       '.MathJax_Preview + .MathJax_SVG',
       '.MathJax_Preview + .MathJax_Display',
       '.MathJax_Preview + .MathJax_CHTML',
+      '.MathJax_Preview + .mjx-chtml',
     ],
     parser: (el) => {
       if (!el) return
