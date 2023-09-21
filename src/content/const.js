@@ -72,13 +72,13 @@ export const rules = {
   },
   math_img: {
     testUrl: ['https://zh.wikipedia.org/wiki/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95'],
-    selectorList: ['.mwe-math-element'],
+    selectorList: ['.mwe-math-element', '[class*="tex-img"]'],
     parser: (el) => {
       if (!el) return
       const imgEl = el.querySelector('img')
       if (!imgEl) return
       if (!imgEl.alt) return
-      copyLatex(imgEl.alt, el)
+      copyLatex(latexRefine(imgEl.alt), el)
     },
   },
   // wolfram_math_img: {

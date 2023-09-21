@@ -1,3 +1,5 @@
+import Toastify from 'toastify-js'
+import 'toastify-js/src/toastify.css'
 let clipboard = navigator.clipboard
 
 export function initClipboard() {
@@ -9,7 +11,9 @@ export function initClipboard() {
 
 export function copyLatex(latexContent, el) {
   // https://web.dev/async-clipboard/
-  clipboard.writeText(latexContent).then(() => addCopiedStyle(el))
+  clipboard.writeText(latexContent).then(() => {
+    addCopiedStyle(el)
+  })
 }
 
 export function copyLatexAsImage(latexBlob, el) {
@@ -21,6 +25,10 @@ export function copyLatexAsImage(latexBlob, el) {
     ])
     .then(() => {
       addCopiedStyle(el)
+      Toastify({
+        text: 'There is no latex formula was found, Copied it as Image',
+        duration: 3000,
+      }).showToast()
     })
 }
 
