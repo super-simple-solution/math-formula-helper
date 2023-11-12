@@ -36,12 +36,17 @@ export const rules = {
     parser: (el) => {
       if (!el) return
       const annotationEl = el.querySelector('.katex-mathml annotation')
+      // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
+      const hiddenTexEl = el.closest('.answer').previousElementSibling
       // 获取数学公式dom及属性
-      if (annotationEl.getAttribute('encoding').includes('application/x-tex')) {
-        const latexContent = annotationEl.textContent.trim()
-        if (!latexContent.length) return
-        copyLatex(latexRefine(latexContent), el)
+      let latexContent = ''
+      if (annotationEl?.getAttribute('encoding').includes('application/x-tex')) {
+        latexContent = annotationEl.textContent.trim()
+      } else if (hiddenTexEl?.classList.contains('hidden')) {
+        latexContent = hiddenTexEl.textContent.trim()
       }
+      if (!latexContent.length) return
+      copyLatex(latexRefine(latexContent), el)
     },
   },
   math_jax_html: {
