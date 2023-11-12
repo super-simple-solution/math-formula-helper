@@ -37,7 +37,7 @@ export const rules = {
       if (!el) return
       const annotationEl = el.querySelector('.katex-mathml annotation')
       // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
-      const hiddenTexEl = el.closest('.answer').previousElementSibling
+      const hiddenTexEl = el.closest('.answer')?.previousElementSibling
       // 获取数学公式dom及属性
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding').includes('application/x-tex')) {
