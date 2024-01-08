@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "clipboard-polyfill": "^4.0.0",
+    "hotkeys-js": "^3.13.3",
     "mathml-to-latex": "^1.3.0",
     "toastify-js": "^1.12.0"
   }

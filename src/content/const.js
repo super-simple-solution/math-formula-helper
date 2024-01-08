@@ -1,7 +1,5 @@
 import { copyLatex, copyLatexAsImage, svgToImage } from './util'
 
-const isVIP = false
-
 export const rules = {
   math_jax: {
     testUrl: [
@@ -61,11 +59,7 @@ export const rules = {
         const svgEl = el.querySelector('svg')
         // TODO: overlay, and convert image to latex
         svgToImage(svgEl).then((blob) => {
-          if (isVIP) {
-            // TODO: send blob to server
-          } else {
-            copyLatexAsImage(blob, el)
-          }
+          copyLatexAsImage(blob, el)
         })
         return
       }
@@ -76,13 +70,15 @@ export const rules = {
     },
   },
   math_img: {
-    testUrl: ['https://zh.wikipedia.org/wiki/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95'],
-    selectorList: ['.mwe-math-element', '[class*="tex-img"]'],
+    testUrl: [
+      'https://zh.wikipedia.org/wiki/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95',
+      'https://developer.nvidia.com/blog/improving-diffusion-models-as-an-alternative-to-gans-part-1/',
+    ],
+    selectorList: ['.mwe-math-element', 'img[class*="tex-img"]', 'img[class*="latex"]'],
     parser: (el) => {
       if (!el) return
-      const imgEl = el.querySelector('img')
-      if (!imgEl) return
-      if (!imgEl.alt) return
+      const imgEl = el.querySelector('img') || el.closest('img')
+      if (!imgEl || !imgEl.alt) return
       copyLatex(latexRefine(imgEl.alt), el)
     },
   },
