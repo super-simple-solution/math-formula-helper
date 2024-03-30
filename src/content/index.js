@@ -1,6 +1,6 @@
 import { initClipboard } from './util'
 import { rules } from './const'
-import hotkeys from 'hotkeys-js'
+// import hotkeys from 'hotkeys-js'
 
 let count = 0
 let inited = false
@@ -39,17 +39,17 @@ function init(resetCount) {
 init(true)
 
 // turn all svg to image with latex alt
-hotkeys('shift+up,esc', function (event, handler) {
-  switch (handler.key) {
-    case 'shift+up':
-      focusIns && focusIns.init()
-      break
-    case 'esc':
-      focusIns && focusIns.unFocus()
-      break
-    default:
-  }
-})
+// hotkeys('shift+up,esc', function (event, handler) {
+//   switch (handler.key) {
+//     case 'shift+up':
+//       focusIns && focusIns.init()
+//       break
+//     case 'esc':
+//       focusIns && focusIns.unFocus()
+//       break
+//     default:
+//   }
+// })
 
 document.addEventListener('visibilitychange', () => {
   if (!inited && document.visibilityState === 'visible') {
