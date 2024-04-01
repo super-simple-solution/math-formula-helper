@@ -19,7 +19,7 @@ export const rules = {
       if (!el) return
       const scriptEl = el.nextElementSibling
       if (scriptEl.tagName === 'SCRIPT' && scriptEl.type.includes('math/tex')) {
-        const latexContent = scriptEl.textContent.trim()
+        const latexContent = scriptEl.textContent
         if (!latexContent.length) return
         copyLatex(latexRefine(latexContent), el)
       }
@@ -41,12 +41,14 @@ export const rules = {
       // 获取数学公式dom及属性
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding').includes('application/x-tex')) {
-        latexContent = annotationEl.textContent.trim()
+        latexContent = annotationEl.textContent
       } else if (hiddenTexEl?.classList.contains('hidden')) {
-        latexContent = hiddenTexEl.textContent.trim()
-      } else if (mathTexEl && window.location.host.indexOf('leetcode') > -1) {
-        const nodeList = mathTexEl.childNodes
-        latexContent = nodeList[nodeList.length - 1]
+        latexContent = hiddenTexEl.textContent
+      } else if (mathTexEl && window.location.host.includes('leetcode')) {
+        const lastChild = mathTexEl.lastChild
+        if (lastChild.nodeType === 3) {
+          latexContent = lastChild.textContent
+        }
       }
       if (!latexContent.length) return
       copyLatex(latexRefine(latexContent), el)
@@ -100,6 +102,8 @@ export const rules = {
 }
 
 function latexRefine(content) {
+  content = content.trim()
+  if (!content.length) return ''
   if (content.includes('\\\\') && !content.startsWith('\\begin')) {
     return `\\begin{array}{c} ${content} \\end{array}`
   }
