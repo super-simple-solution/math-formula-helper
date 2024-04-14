@@ -29,6 +29,7 @@ export const rules = {
     testUrl: [
       'https://juejin.cn/post/7210175991837507621',
       'http://wujiawen.xyz/posts/notes/articles/%E7%AC%94%E8%AE%B0llama_note.html',
+      'https://blog.csdn.net/qq_35357274/article/details/109935169',
     ],
     selectorList: ['.katex'],
     parser: (el) => {
@@ -38,16 +39,21 @@ export const rules = {
       const hiddenTexEl = el.closest('.answer')?.previousElementSibling
       // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
       const mathTexEl = el.querySelector('.katex-mathml')
+      const host = location.host
       // 获取数学公式dom及属性
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding').includes('application/x-tex')) {
         latexContent = annotationEl.textContent
       } else if (hiddenTexEl?.classList.contains('hidden')) {
         latexContent = hiddenTexEl.textContent
-      } else if (mathTexEl && window.location.host.includes('leetcode')) {
-        const lastChild = mathTexEl.lastChild
-        if (lastChild.nodeType === 3) {
-          latexContent = lastChild.textContent
+      } else if (mathTexEl) {
+        if (host.includes('leetcode.')) {
+          const lastChild = mathTexEl.lastChild
+          if (lastChild.nodeType === 3) {
+            latexContent = lastChild.textContent
+          }
+        } else if (host.includes('csdn.net')) {
+          latexContent = katexContentExtra(mathTexEl.textContent)
         }
       }
       if (!latexContent.length) return
@@ -99,6 +105,18 @@ export const rules = {
   //     copyLatex(el.alt, el)
   //   },
   // },
+}
+
+// https://blog.csdn.net/qq_35357274/article/details/109935169
+function katexContentExtra(content) {
+  const reg1 = /\s+[^\s\n]{1}[\s|\n][\s|\n]/g
+  const reg2 = /\\begin{.+?end{\w+?}$/
+  const latexPattern = 'begin{'
+  content = content.replace(reg1, '').trim()
+  if (content.includes(latexPattern) && content.match(reg2)) {
+    content = content.match(reg2)[0]
+  }
+  return content
 }
 
 function latexRefine(content) {
