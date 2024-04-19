@@ -8,11 +8,18 @@ export function initClipboard() {
     import('clipboard-polyfill').then((res) => (clipboard = res))
   }
 }
-
 export function copyLatex(latexContent, el) {
   // https://web.dev/async-clipboard/
   clipboard.writeText(latexContent).then(() => {
     addCopiedStyle(el)
+    Toastify({
+      text: 'Copied Success!',
+      duration: 3000,
+      position: 'center',
+      style: {
+        background: 'linear-gradient(to right, #00b09b, #96c93d)',
+      },
+    }).showToast()
   })
 }
 
@@ -28,6 +35,9 @@ export function copyLatexAsImage(latexBlob, el) {
       Toastify({
         text: 'There is no latex formula was found, Copied it as Image',
         duration: 3000,
+        style: {
+          background: 'linear-gradient(to right, #FC5D2B, #FC3D39)',
+        },
       }).showToast()
     })
 }

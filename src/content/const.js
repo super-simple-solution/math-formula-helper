@@ -1,6 +1,15 @@
 import { copyLatex, copyLatexAsImage, svgToImage } from './util'
 
 export const rules = {
+  math_ltx: {
+    testUrl: ['https://dlmf.nist.gov/5.12'],
+    selectorList: ['.ltx_equation .ltx_Math'],
+    parser: (el) => {
+      if (!el) return
+      const content = el.getAttribute('alttext')
+      copyLatex(latexRefine(content), el)
+    },
+  },
   math_jax: {
     testUrl: [
       'https://www.andlearning.org/math-formula/',
@@ -86,13 +95,26 @@ export const rules = {
     testUrl: [
       'https://zh.wikipedia.org/wiki/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95',
       'https://developer.nvidia.com/blog/improving-diffusion-models-as-an-alternative-to-gans-part-1/',
+      'https://www.baike.com/wikiid/7822307514691700917?query=%E6%95%B0%E5%AD%A6%E8%A1%A8%E8%BE%BE%E5%BC%8F',
     ],
-    selectorList: ['.mwe-math-element', 'img[class*="tex-img"]', 'img[class*="latex"]'],
+    selectorList: [
+      '.mwe-math-element',
+      'img[class*="tex-img"]',
+      'img[class*="latex"]',
+      'div[data-type="formula"] img[dataset-id="formula"]',
+    ],
     parser: (el) => {
       if (!el) return
-      const imgEl = el.querySelector('img') || el.closest('img')
-      if (!imgEl || !imgEl.alt) return
-      copyLatex(latexRefine(imgEl.alt), el)
+      const host = location.host
+      let copyText = ''
+      if (host.includes('baike.')) {
+        copyText = el.getAttribute('dataset-value')
+      } else {
+        const imgEl = el.querySelector('img') || el.closest('img')
+        if (!imgEl || !imgEl.alt) return
+        copyText = imgEl.alt
+      }
+      copyLatex(latexRefine(copyText), el)
     },
   },
   // wolfram_math_img: {
