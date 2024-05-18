@@ -2,42 +2,42 @@ import Toastify from 'toastify-js'
 import 'toastify-js/src/toastify.css'
 let clipboard = navigator.clipboard
 
+const toastConfig = {
+  duration: 3000,
+  position: 'center',
+  style: {
+    background: 'linear-gradient(to right, #00b09b, #96c93d)',
+  },
+}
+
 export function initClipboard() {
   // http webpage cannot use native clipboard api
   if (!clipboard) {
     import('clipboard-polyfill').then((res) => (clipboard = res))
   }
 }
-export function copyLatex(latexContent, el) {
+
+export function copyLatex(latexContent, options = { text: 'Copied' }) {
   // https://web.dev/async-clipboard/
-  clipboard.writeText(latexContent).then(() => {
-    addCopiedStyle(el)
+  return clipboard.writeText(latexContent).then(() => {
     Toastify({
-      text: 'Copied Success!',
-      duration: 3000,
-      position: 'center',
-      style: {
-        background: 'linear-gradient(to right, #00b09b, #96c93d)',
-      },
+      ...toastConfig,
+      text: options.text,
     }).showToast()
   })
 }
 
-export function copyLatexAsImage(latexBlob, el) {
-  clipboard
+export function copyLatexAsImage(latexBlob, options = { text: 'LaTeX content not found, Copied it as Image' }) {
+  return clipboard
     .write([
       new ClipboardItem({
         [latexBlob.type]: latexBlob,
       }),
     ])
     .then(() => {
-      addCopiedStyle(el)
       Toastify({
-        text: 'There is no latex formula was found, Copied it as Image',
-        duration: 3000,
-        style: {
-          background: 'linear-gradient(to right, #FC5D2B, #FC3D39)',
-        },
+        ...toastConfig,
+        text: options.text,
       }).showToast()
     })
 }

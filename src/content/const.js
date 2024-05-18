@@ -1,14 +1,12 @@
-import { copyLatex, copyLatexAsImage, svgToImage } from './util'
+import { copyLatex, copyLatexAsImage, addCopiedStyle, svgToImage } from './util'
 
 export const rules = {
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12'],
     selectorList: ['.ltx_equation .ltx_Math'],
-    parser: (el) => {
-      if (!el) return
-      const content = el.getAttribute('alttext')
-      copyLatex(latexRefine(content), el)
-    },
+    parse: (el) => el.getAttribute('alttext'),
+    pre,
+    post,
   },
   math_jax: {
     testUrl: [
@@ -24,15 +22,13 @@ export const rules = {
       '.MathJax_Preview + .MathJax_CHTML',
       '.MathJax_Preview + .mjx-chtml',
     ],
-    parser: (el) => {
-      if (!el) return
+    parse: (el) => {
       const scriptEl = el.nextElementSibling
-      if (scriptEl.tagName === 'SCRIPT' && scriptEl.type.includes('math/tex')) {
-        const latexContent = scriptEl.textContent
-        if (!latexContent.length) return
-        copyLatex(latexRefine(latexContent), el)
-      }
+      if (scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/tex')) return
+      return scriptEl.textContent
     },
+    pre,
+    post,
   },
   math_ml: {
     testUrl: [
@@ -41,8 +37,7 @@ export const rules = {
       'https://blog.csdn.net/qq_35357274/article/details/109935169',
     ],
     selectorList: ['.katex'],
-    parser: (el) => {
-      if (!el) return
+    parse: (el) => {
       const annotationEl = el.querySelector('.katex-mathml annotation')
       // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
       const hiddenTexEl = el.closest('.answer')?.previousElementSibling
@@ -65,30 +60,42 @@ export const rules = {
           latexContent = katexContentExtra(mathTexEl.textContent)
         }
       }
-      if (!latexContent.length) return
-      copyLatex(latexRefine(latexContent), el)
+      return latexContent
     },
+    pre,
+    post,
   },
   math_jax_html: {
     key: 'math_jax_html',
     testUrl: ['https://www.mathreference.org/'],
     selectorList: ['mjx-container.MathJax'],
-    parser: (el) => {
-      if (!el) return
+    parse: (el) => {
       const mathEl = el.querySelector('mjx-assistive-mml')
       // svg with no content
       if (!mathEl) {
         const svgEl = el.querySelector('svg')
         // TODO: overlay, and convert image to latex
-        svgToImage(svgEl).then((blob) => {
-          copyLatexAsImage(blob, el)
-        })
-        return
+        return svgToImage(svgEl)
       }
       // MathML2LaTeX
       if (!window.Mathml2latex) return
       const latexContent = window.Mathml2latex.convert(mathEl.innerHTML)
-      copyLatex(latexRefine(latexContent), el)
+      return latexContent
+    },
+    pre: (content) => {
+      if (!content) return
+      if (content instanceof Blob) return content
+      return latexRefine(content)
+    },
+    post: (el, content) => {
+      if (!content) return
+      let copyPromise
+      if (content instanceof Blob) {
+        copyPromise = copyLatexAsImage(content)
+      } else {
+        copyPromise = copyLatex(content)
+      }
+      copyPromise.then(() => addCopiedStyle(el))
     },
   },
   math_img: {
@@ -103,30 +110,44 @@ export const rules = {
       'img[class*="latex"]',
       'div[data-type="formula"] img[dataset-id="formula"]',
     ],
-    parser: (el) => {
-      if (!el) return
+    parse: (el) => {
       const host = location.host
-      let copyText = ''
+      let latexContent = ''
       if (host.includes('baike.')) {
-        copyText = el.getAttribute('dataset-value')
+        latexContent = el.getAttribute('dataset-value')
       } else {
         const imgEl = el.querySelector('img') || el.closest('img')
         if (!imgEl || !imgEl.alt) return
-        copyText = imgEl.alt
+        latexContent = imgEl.alt
       }
-      copyLatex(latexRefine(copyText), el)
+      return latexContent
+    },
+    pre,
+    post,
+  },
+  wolfram_math_img: {
+    testUrl: ['https://mathworld.wolfram.com/HilbertSpace.html'],
+    selectorList: ['img.numberedequation'],
+    parse: (el) => {
+      if (!el.alt) return
+      // el.alt is TexForm, not latex
+      return el.alt
+    },
+    pre: (content) => content.trim(),
+    post: (content, el) => {
+      copyLatex(content, {
+        text: 'Copied as TexForm(not LaTeX)',
+      }).then(() => addCopiedStyle(el))
     },
   },
-  // wolfram_math_img: {
-  //   testUrl: ['https://mathworld.wolfram.com/HilbertSpace.html'],
-  //   selectorList: ['img.numberedequation'],
-  //   parser: (el) => {
-  //     if (!el) return
-  //     if (!el.alt) return
-  //     TODO: el.alt is TexForm, not latex
-  //     copyLatex(el.alt, el)
-  //   },
-  // },
+}
+
+function pre(content) {
+  return latexRefine(content)
+}
+
+function post(content, el) {
+  copyLatex(content).then(() => addCopiedStyle(el))
 }
 
 // https://blog.csdn.net/qq_35357274/article/details/109935169

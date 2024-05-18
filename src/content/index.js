@@ -8,9 +8,7 @@ function init(resetCount) {
   if (inited) return
   if (resetCount) count = 0
   if (document.visibilityState === 'hidden') return
-  const rule = Object.values(rules).find((item) => {
-    return document.querySelector(item.selectorList.join())
-  })
+  const rule = Object.values(rules).find((item) => document.querySelector(item.selectorList.join()))
   if (count > 5) return
   count++
   if (!rule) {
@@ -32,7 +30,8 @@ function init(resetCount) {
     const target = e.target
     const finalTarget = target.closest(rule.selectorList.join())
     if (!finalTarget) return
-    rule.parser(finalTarget)
+    const content = rule.pre(rule.parse(finalTarget))
+    rule.post(finalTarget, content)
   })
 }
 
