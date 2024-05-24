@@ -60,6 +60,7 @@ document.addEventListener('scroll', () => {
   const ruleSelector = rule.selectorList.join()
   const elList = Array.from(document.querySelectorAll(ruleSelector)).filter((item) => !item.getAttribute('data-uuid'))
   if (!elList.length) return
+  // TODO: wait until latex rendered
   fullPageCopy(elList)
 })
 
