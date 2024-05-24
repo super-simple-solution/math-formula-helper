@@ -4,6 +4,7 @@ import hotkeys from 'hotkeys-js'
 
 let count = 0
 let inited = false
+let canCopyAll = false
 let rule
 function init(resetCount) {
   if (inited) return
@@ -54,9 +55,18 @@ document.addEventListener('visibilitychange', () => {
   }
 })
 
-async function fullPageCopy() {
+document.addEventListener('scroll', () => {
+  if (!canCopyAll) return
   const ruleSelector = rule.selectorList.join()
-  const elList = document.querySelectorAll(ruleSelector)
+  const elList = Array.from(document.querySelectorAll(ruleSelector)).filter((item) => !item.getAttribute('data-uuid'))
+  if (!elList.length) return
+  fullPageCopy(elList)
+})
+
+async function fullPageCopy(targetList = []) {
+  canCopyAll = true
+  const ruleSelector = rule.selectorList.join()
+  let elList = targetList.length ? targetList : document.querySelectorAll(ruleSelector)
   for (let el of elList) {
     if (el.tagName === 'IMG') continue
     const uuid = crypto.randomUUID()
