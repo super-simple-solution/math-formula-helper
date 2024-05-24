@@ -24,7 +24,7 @@ export const rules = {
     ],
     parse: (el) => {
       const scriptEl = el.nextElementSibling
-      if (scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/tex')) return
+      if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/tex')) return
       return scriptEl.textContent
     },
     pre,
@@ -134,7 +134,7 @@ export const rules = {
       return el.alt
     },
     pre: (content) => content.trim(),
-    post: (content, el) => {
+    post: (el, content) => {
       copyLatex(content, {
         text: 'Copied as TexForm(not LaTeX)',
       }).then(() => addCopiedStyle(el))
@@ -146,7 +146,7 @@ function pre(content) {
   return latexRefine(content)
 }
 
-function post(content, el) {
+function post(el, content) {
   copyLatex(content).then(() => addCopiedStyle(el))
 }
 

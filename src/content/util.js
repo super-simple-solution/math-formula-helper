@@ -20,7 +20,7 @@ export function initClipboard() {
 export function copyLatex(latexContent, options = { text: 'Copied' }) {
   // https://web.dev/async-clipboard/
   return clipboard.writeText(latexContent).then(() => {
-    Toastify({
+    return Toastify({
       ...toastConfig,
       text: options.text,
     }).showToast()
@@ -35,7 +35,7 @@ export function copyLatexAsImage(latexBlob, options = { text: 'LaTeX content not
       }),
     ])
     .then(() => {
-      Toastify({
+      return Toastify({
         ...toastConfig,
         text: options.text,
       }).showToast()
@@ -90,4 +90,22 @@ function loadImage(url) {
     img.addEventListener('error', (err) => reject(err))
     img.src = url
   })
+}
+
+export function createOpacityImage(options) {
+  const { width, height, id, alt } = options
+  const canvas = document.createElement('canvas')
+  canvas.width = width // Set width of the canvas
+  canvas.height = height // Set height of the canvas
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = 'rgba(255, 0, 0, 0)' // Red color with 50% transparency
+  ctx.fillRect(0, 0, width, height) // Fill rectangle
+
+  const imageDataURL = canvas.toDataURL('image/png')
+  const img = new Image()
+  img.src = imageDataURL
+  img.id = id
+  img.alt = alt
+  return img
 }
