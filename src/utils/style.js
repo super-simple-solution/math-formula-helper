@@ -2,14 +2,16 @@ const containerStyle = `{
   position: relative;
   cursor: pointer;
 }`
+
 const containerHoverStyle = `{
-  background: #dcfce7;
+  background-color: rgba(220, 252, 231, 0.3);
 }`
 
 // :after
 const copyStyle = `{
   content: ' ';
   position: absolute;
+  z-index: 1;
   top: 0;
   right: 0;
   display: inline-block;

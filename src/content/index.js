@@ -1,5 +1,6 @@
+import '@/style/index.scss'
 import { initClipboard, createOpacityImage } from './util'
-import { rules } from './const'
+import { rules, ImageAltRule } from './const'
 import hotkeys from 'hotkeys-js'
 
 let count = 0
@@ -21,7 +22,7 @@ function init(resetCount) {
   initClipboard()
   chrome.runtime.sendMessage({
     greeting: 'insert-css',
-    data: rule.selectorList,
+    data: [...rule.selectorList, ...ImageAltRule.selectorList],
   })
   if (rule.key === 'math_jax_html') {
     import('mathml-to-latex').then((res) => {
@@ -30,10 +31,12 @@ function init(resetCount) {
   }
   document.body.addEventListener('click', (e) => {
     const target = e.target
-    const finalTarget = target.closest(rule.selectorList.join())
+    let curRule = canCopyAll ? ImageAltRule : rule
+    const selector = curRule.selectorList.join()
+    const finalTarget = target.closest(selector)
     if (!finalTarget) return
-    const content = rule.pre(rule.parse(finalTarget))
-    rule.post(finalTarget, content)
+    const content = curRule.pre(curRule.parse(finalTarget))
+    curRule.post(finalTarget, content)
   })
 }
 
@@ -64,12 +67,15 @@ document.addEventListener('scroll', () => {
   fullPageCopy(elList)
 })
 
+// 如下链接复制有bug；如原网页可复制，则区别对待
+// https://www.wikiwand.com/zh-hans/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95
+// https://juejin.cn/post/7210175991837507621
 async function fullPageCopy(targetList = []) {
   canCopyAll = true
   const ruleSelector = rule.selectorList.join()
   let elList = targetList.length ? targetList : document.querySelectorAll(ruleSelector)
   for (let el of elList) {
-    if (el.tagName === 'IMG') continue
+    if (el.tagName === 'IMG' || !el.offsetHeight) continue
     const uuid = crypto.randomUUID()
     const parent = el.parentNode
     let parentPosition = window.getComputedStyle(parent).position
@@ -78,15 +84,16 @@ async function fullPageCopy(targetList = []) {
     el.setAttribute('data-uuid', uuid)
     if (!content || content instanceof Blob) continue
     let img = createOpacityImage({
-      width: el.clientWidth,
-      height: el.clientHeight,
+      width: el.offsetWidth,
+      height: el.offsetHeight,
       alt: content,
       id: uuid,
     })
-    img.style.position = 'absolute'
-    img.style.left = el.offsetLeft + 'px'
-    img.style.top = el.offsetTop + 'px'
-    img.style.zIndex = 100
-    el.parentNode.insertBefore(img, el)
+    const imgContainer = document.createElement('span')
+    imgContainer.className = 'sss-img-latex'
+    imgContainer.style.left = el.offsetLeft + 'px'
+    imgContainer.style.top = el.offsetTop + 'px'
+    imgContainer.appendChild(img)
+    el.parentNode.insertBefore(imgContainer, el)
   }
 }

@@ -1,5 +1,12 @@
 import { copyLatex, copyLatexAsImage, addCopiedStyle, svgToImage } from './util'
 
+export const ImageAltRule = {
+  selectorList: ['.sss-img-latex'],
+  parse: (el) => el.children[0].getAttribute('alt'),
+  pre,
+  post,
+}
+
 export const rules = {
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12'],
