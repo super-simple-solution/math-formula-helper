@@ -63,13 +63,9 @@ document.addEventListener('scroll', () => {
   const ruleSelector = rule.selectorList.join()
   const elList = Array.from(document.querySelectorAll(ruleSelector)).filter((item) => !item.getAttribute('data-uuid'))
   if (!elList.length) return
-  // TODO: wait until latex rendered
   fullPageCopy(elList)
 })
 
-// 如下链接复制有bug；如原网页可复制，则区别对待
-// https://www.wikiwand.com/zh-hans/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95
-// https://juejin.cn/post/7210175991837507621
 async function fullPageCopy(targetList = []) {
   canCopyAll = true
   const ruleSelector = rule.selectorList.join()
@@ -82,6 +78,7 @@ async function fullPageCopy(targetList = []) {
     if (parentPosition === 'static') parent.style.position = 'relative'
     const content = rule.parse(el)
     el.setAttribute('data-uuid', uuid)
+    el.style.userSelect = 'none'
     if (!content || content instanceof Blob) continue
     let img = createOpacityImage({
       width: el.offsetWidth,
