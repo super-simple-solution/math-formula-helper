@@ -3,3 +3,7 @@
   z-index: 9999;
   font-size: 0;
 }
+
+.sss-none-select, .sss-none-select * {
+  user-select: none;
+}

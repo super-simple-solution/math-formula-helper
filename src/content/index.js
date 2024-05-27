@@ -1,5 +1,5 @@
 import '@/style/index.scss'
-import { initClipboard, createOpacityImage } from './util'
+import { initClipboard, createOpacityImage, formatCopiedText } from './util'
 import { rules, ImageAltRule } from './const'
 import hotkeys from 'hotkeys-js'
 
@@ -46,7 +46,7 @@ init(true)
 hotkeys('shift+up,esc', (_, handler) => {
   switch (handler.key) {
     case 'shift+up':
-      fullPageCopy()
+      !canCopyAll && fullPageCopy()
       break
     default:
   }
@@ -66,6 +66,11 @@ document.addEventListener('scroll', () => {
   fullPageCopy(elList)
 })
 
+document.addEventListener('copy', () => {
+  if (!canCopyAll) return
+  formatCopiedText()
+})
+
 async function fullPageCopy(targetList = []) {
   canCopyAll = true
   const ruleSelector = rule.selectorList.join()
@@ -78,7 +83,7 @@ async function fullPageCopy(targetList = []) {
     if (parentPosition === 'static') parent.style.position = 'relative'
     const content = rule.parse(el)
     el.setAttribute('data-uuid', uuid)
-    el.style.userSelect = 'none'
+    el.classList.add('sss-none-select')
     if (!content || content instanceof Blob) continue
     let img = createOpacityImage({
       width: el.offsetWidth,

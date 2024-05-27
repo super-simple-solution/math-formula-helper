@@ -17,6 +17,13 @@ export function initClipboard() {
   }
 }
 
+export function formatCopiedText() {
+  return clipboard.readText().then((text) => {
+    // TODO: remove \n\s? not working
+    clipboard.writeText(text.replace(/\n\s?/gm, '').replace(/\n/gm, ''))
+  })
+}
+
 export function copyLatex(latexContent, options = { text: 'Copied' }) {
   // https://web.dev/async-clipboard/
   return clipboard.writeText(latexContent).then(() => {
