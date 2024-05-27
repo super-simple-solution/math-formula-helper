@@ -46,7 +46,8 @@ init(true)
 hotkeys('shift+up,esc', (_, handler) => {
   switch (handler.key) {
     case 'shift+up':
-      !canCopyAll && fullPageCopy()
+      if (!inited || canCopyAll) return
+      fullPageCopy()
       break
     default:
   }

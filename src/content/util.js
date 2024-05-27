@@ -19,8 +19,8 @@ export function initClipboard() {
 
 export function formatCopiedText() {
   return clipboard.readText().then((text) => {
-    // TODO: remove \n\s? not working
-    clipboard.writeText(text.replace(/\n\s?/gm, '').replace(/\n/gm, ''))
+    // remove image markdown, juse pure text
+    clipboard.writeText(text)
   })
 }
 
