@@ -2,6 +2,7 @@ import '@/style/index.scss'
 import { initClipboard, createOpacityImage, formatCopiedText } from './util'
 import { rules, ImageAltRule } from './const'
 import hotkeys from 'hotkeys-js'
+import { handleTargetDom } from './targetDom'
 
 const latexPopover = document.createElement('latex-popover')
 document.querySelector('html').appendChild(latexPopover)
@@ -32,43 +33,8 @@ function init(resetCount) {
       window.Mathml2latex = res.MathMLToLaTeX
     })
   }
-  document.body.addEventListener('click', (e) => {
-    const target = e.target
-    const curRule = canCopyAll ? ImageAltRule : rule
-    const selector = curRule.selectorList.join()
-    const finalTarget = target.closest(selector)
-    latexPopover.style.display = 'none'
-    if (!finalTarget) return
 
-    const rect = target.getBoundingClientRect()
-    const left = rect.left + window.scrollX
-    const top = rect.top + window.scrollY
-
-    latexPopover.innerHTML = `
-      <div class="latex-popover-content">
-        <img src="${chrome.runtime.getURL('assets/images/svg/book.svg')}"
-        class="latex-popover-btn"
-        onclick='event.stopPropagation();${copyCurLatex(curRule, finalTarget, true)}'/>        
-      <img src="${chrome.runtime.getURL('assets/images/svg/copy.svg')}"
-      class="latex-popover-btn" onclick='event.stopPropagation();${copyCurLatex(curRule, finalTarget)}'/>
-    
-      </div>
-    `
-    latexPopover.style.left = `${left}px`
-    latexPopover.style.top = `${top + 30}px`
-    latexPopover.style.display = 'block'
-
-    // const content = curRule.pre(curRule.parse(finalTarget))
-    // curRule.post(finalTarget, content)
-  })
-}
-
-function copyCurLatex(curRule, finalTarget, explain = false) {
-  const content = curRule.pre(curRule.parse(finalTarget))
-  curRule.post(finalTarget, content)
-  if (explain) {
-    console.log(1242)
-  }
+  document.body.addEventListener('click', (e) => handleTargetDom(e, canCopyAll, ImageAltRule, rule, latexPopover))
 }
 
 init(true)
