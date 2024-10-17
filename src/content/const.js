@@ -31,8 +31,15 @@ export const rules = {
     ],
     parse: (el) => {
       const scriptEl = el.nextElementSibling
-      if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/tex')) return
-      return scriptEl.textContent
+      if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/')) return
+      // https://www.sciencedirect.com/science/article/pii/S2095809919302279
+      if (scriptEl.type.includes('math/mml')) {
+        if (!window.Mathml2latex) return
+        const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
+        return latexContent
+      } else {
+        return scriptEl.textContent
+      }
     },
     pre,
     post,
@@ -73,8 +80,7 @@ export const rules = {
     post,
   },
   math_jax_html: {
-    key: 'math_jax_html',
-    testUrl: ['https://www.mathreference.org/'],
+    testUrl: ['https://www.mathreference.org/', 'https://www.sciencedirect.com/science/article/pii/S2095809919302279'],
     selectorList: ['mjx-container.MathJax'],
     parse: (el) => {
       const mathEl = el.querySelector('mjx-assistive-mml')
@@ -84,10 +90,10 @@ export const rules = {
         // TODO: overlay, and convert image to latex
         return svgToImage(svgEl)
       }
-      // MathML2LaTeX
-      if (!window.Mathml2latex) return
-      const latexContent = window.Mathml2latex.convert(mathEl.innerHTML)
-      return latexContent
+      return initMathml().then(() => {
+        const latexContent = window.Mathml2latex.convert(mathEl.innerHTML)
+        return latexContent
+      })
     },
     pre: (content) => {
       if (!content) return

@@ -35,8 +35,10 @@ function init(resetCount) {
     const selector = curRule.selectorList.join()
     const finalTarget = target.closest(selector)
     if (!finalTarget) return
-    const content = curRule.pre(curRule.parse(finalTarget))
-    curRule.post(finalTarget, content)
+    curRule.parse(finalTarget).then((res) => {
+      const content = curRule.pre(res)
+      curRule.post(finalTarget, content)
+    })
   })
 }
 
@@ -82,7 +84,7 @@ async function fullPageCopy(targetList = []) {
     const parent = el.parentNode
     let parentPosition = window.getComputedStyle(parent).position
     if (parentPosition === 'static') parent.style.position = 'relative'
-    const content = rule.parse(el)
+    const content = await rule.parse(el)
     el.setAttribute('data-uuid', uuid)
     el.classList.add('sss-none-select')
     if (!content || content instanceof Blob) continue
