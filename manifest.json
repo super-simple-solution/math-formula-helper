@@ -32,5 +32,14 @@
       ],
       "all_frames": true
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/images/svg/book.svg",
+        "assets/images/svg/copy.svg"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

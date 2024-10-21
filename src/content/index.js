@@ -2,6 +2,10 @@ import '@/style/index.scss'
 import { initClipboard, createOpacityImage, formatCopiedText } from './util'
 import { rules, ImageAltRule } from './const'
 import hotkeys from 'hotkeys-js'
+import { handleTargetDom } from './targetDom'
+
+const latexPopover = document.createElement('latex-popover')
+document.querySelector('html').appendChild(latexPopover)
 
 let count = 0
 let inited = false
@@ -24,22 +28,8 @@ function init(resetCount) {
     greeting: 'insert-css',
     data: [...rule.selectorList, ...ImageAltRule.selectorList],
   })
-  if (rule.key === 'math_jax_html') {
-    import('mathml-to-latex').then((res) => {
-      window.Mathml2latex = res.MathMLToLaTeX
-    })
-  }
-  document.body.addEventListener('click', (e) => {
-    const target = e.target
-    let curRule = canCopyAll ? ImageAltRule : rule
-    const selector = curRule.selectorList.join()
-    const finalTarget = target.closest(selector)
-    if (!finalTarget) return
-    curRule.parse(finalTarget).then((res) => {
-      const content = curRule.pre(res)
-      curRule.post(finalTarget, content)
-    })
-  })
+
+  document.body.addEventListener('click', (e) => handleTargetDom(e, canCopyAll, ImageAltRule, rule, latexPopover))
 }
 
 init(true)
