@@ -2,7 +2,7 @@ import { copyLatex, copyLatexAsImage, addCopiedStyle, svgToImage, initMathml } f
 
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
-  parse: (el) => el.children[0].getAttribute('alt'),
+  parse: async (el) => el.children[0].getAttribute('alt'),
   pre,
   post,
 }
@@ -11,7 +11,7 @@ export const rules = {
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12'],
     selectorList: ['.ltx_equation .ltx_Math'],
-    parse: (el) => el.getAttribute('alttext'),
+    parse: async (el) => el.getAttribute('alttext'),
     pre,
     post,
   },
@@ -29,14 +29,15 @@ export const rules = {
       '.MathJax_Preview + .MathJax_CHTML',
       '.MathJax_Preview + .mjx-chtml',
     ],
-    parse: (el) => {
+    parse: async (el) => {
       const scriptEl = el.nextElementSibling
       if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/')) return
       // https://www.sciencedirect.com/science/article/pii/S2095809919302279
       if (scriptEl.type.includes('math/mml')) {
-        if (!window.Mathml2latex) return
-        const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
-        return latexContent
+        return initMathml().then(() => {
+          const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
+          return latexContent
+        })
       } else {
         return scriptEl.textContent
       }
@@ -51,12 +52,12 @@ export const rules = {
       'https://blog.csdn.net/qq_35357274/article/details/109935169',
     ],
     selectorList: ['.katex'],
-    parse: (el) => {
+    parse: async (el) => {
       const annotationEl = el.querySelector('.katex-mathml annotation')
       // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
       const hiddenTexEl = el.closest('.answer')?.previousElementSibling
       // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
-      const mathTexEl = el.querySelector('.katex-mathml')
+      const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
       const host = location.host
       // 获取数学公式dom及属性
       let latexContent = ''
@@ -82,7 +83,7 @@ export const rules = {
   math_jax_html: {
     testUrl: ['https://www.mathreference.org/', 'https://www.sciencedirect.com/science/article/pii/S2095809919302279'],
     selectorList: ['mjx-container.MathJax'],
-    parse: (el) => {
+    parse: async (el) => {
       const mathEl = el.querySelector('mjx-assistive-mml')
       // svg with no content
       if (!mathEl) {
@@ -123,7 +124,7 @@ export const rules = {
       'img[class*="latex"]',
       'div[data-type="formula"] img[dataset-id="formula"]',
     ],
-    parse: (el) => {
+    parse: async (el) => {
       const host = location.host
       let latexContent = ''
       if (host.includes('baike.')) {
@@ -141,7 +142,7 @@ export const rules = {
   wolfram_math_img: {
     testUrl: ['https://mathworld.wolfram.com/HilbertSpace.html'],
     selectorList: ['img.numberedequation'],
-    parse: (el) => {
+    parse: async (el) => {
       if (!el.alt) return
       // el.alt is TexForm, not latex
       return el.alt
