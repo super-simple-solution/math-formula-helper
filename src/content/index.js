@@ -2,10 +2,7 @@ import '@/style/index.scss'
 import { initClipboard, createOpacityImage, formatCopiedText } from './util'
 import { rules, ImageAltRule } from './const'
 import hotkeys from 'hotkeys-js'
-import { handleTargetDom } from './targetDom'
-
-const latexPopover = document.createElement('latex-popover')
-document.querySelector('html').appendChild(latexPopover)
+// import { handleTargetDom } from './targetDom'
 
 let count = 0
 let inited = false
@@ -29,7 +26,20 @@ function init(resetCount) {
     data: [...rule.selectorList, ...ImageAltRule.selectorList],
   })
 
-  document.body.addEventListener('click', (e) => handleTargetDom(e, canCopyAll, ImageAltRule, rule, latexPopover))
+  let curRule = canCopyAll ? ImageAltRule : rule
+  const selector = curRule.selectorList.join()
+
+  // document.body.addEventListener('click', (e) => handleTargetDom(e, curRule))
+
+  document.body.addEventListener('click', (e) => {
+    const target = e.target
+    const finalTarget = target.closest(selector)
+    if (!finalTarget) return
+    curRule.parse(finalTarget).then((res) => {
+      const content = curRule.pre(res)
+      curRule.post(finalTarget, content)
+    })
+  })
 }
 
 init(true)

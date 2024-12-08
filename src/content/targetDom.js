@@ -1,7 +1,9 @@
-export function handleTargetDom(e, canCopyAll, ImageAltRule, rule, latexPopover) {
+const latexPopover = document.createElement('latex-popover')
+document.querySelector('html').appendChild(latexPopover)
+
+export function handleTargetDom(e, rule) {
   const target = e.target
-  const curRule = canCopyAll ? ImageAltRule : rule
-  const selector = curRule.selectorList.join()
+  const selector = rule.selectorList.join()
   const finalTarget = target.closest(selector)
 
   latexPopover.style.display = 'none'
@@ -11,10 +13,10 @@ export function handleTargetDom(e, canCopyAll, ImageAltRule, rule, latexPopover)
   const left = rect.left + window.scrollX
   const top = rect.top + window.scrollY
 
-  setPopoverContent(latexPopover, left, top, curRule, finalTarget)
+  setPopoverContent(left, top, rule, finalTarget)
 }
 
-function setPopoverContent(latexPopover, left, top, curRule, finalTarget) {
+async function setPopoverContent(left, top, rule, finalTarget) {
   latexPopover.innerHTML = `
     <div class="latex-popover-content">
       <img
@@ -34,14 +36,14 @@ function setPopoverContent(latexPopover, left, top, curRule, finalTarget) {
   latexPopover.style.top = `${top + 30}px`
   latexPopover.style.display = 'block'
 
-  // TODO: parse is a promise
-  const finalContent = curRule.pre(curRule.parse(finalTarget))
+  const content = await rule.parse(finalTarget)
+  const finalContent = rule.pre(content)
   document
     .getElementById('book-btn')
     .addEventListener('click', (event) => handleExplain(event, left, top, finalContent, latexPopover))
   document
     .getElementById('copy-btn')
-    .addEventListener('click', (event) => handleCopy(event, curRule, finalTarget, finalContent, latexPopover))
+    .addEventListener('click', (event) => handleCopy(event, rule, finalTarget, finalContent, latexPopover))
 }
 
 function handleExplain(event, left, top, finalContent, latexPopover) {
@@ -59,10 +61,10 @@ function handleExplain(event, left, top, finalContent, latexPopover) {
   latexPopover.style.display = 'block'
 }
 
-function handleCopy(event, curRule, finalTarget, finalContent, latexPopover) {
+function handleCopy(event, rule, finalTarget, finalContent) {
   event.stopPropagation()
 
-  curRule.post(finalTarget, finalContent)
+  rule.post(finalTarget, finalContent)
 
   latexPopover.style.display = 'none'
 }
