@@ -19,7 +19,7 @@ export function initClipboard() {
 
 export function initMathml() {
   if (!window.Mathml2latex) {
-    return import('mathml-to-latex').then((res) => window.Mathml2latex = res.MathMLToLaTeX)
+    return import('mathml-to-latex').then((res) => (window.Mathml2latex = res.MathMLToLaTeX))
   }
   return Promise.resolve(true)
 }
