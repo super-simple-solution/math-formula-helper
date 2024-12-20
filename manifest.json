@@ -1,8 +1,8 @@
 {
-  "name": "LaTeX  Copy-Paste",
-  "version": "0.2.2",
+  "name": "LaTeX Copy",
+  "version": "0.2.3",
   "manifest_version": 3,
-  "description": "Copy & Paste LaTeX: Seamless formula transfer",
+  "description": "Make copying LaTeX effortless and efficient!",
   "icons": {
     "16": "assets/icons/16.png",
     "32": "assets/icons/32.png",
