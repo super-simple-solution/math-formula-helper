@@ -1,4 +1,5 @@
 import { copyLatex, copyLatexAsImage, addCopiedStyle, svgToImage, initMathml } from './util'
+import { getEle } from '@/utils'
 
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
@@ -122,13 +123,13 @@ export const rules = {
       '.mwe-math-element',
       'img[class*="tex-img"]',
       'img[class*="latex"]',
-      'div[data-type="formula"] img[dataset-id="formula"]',
+      'div[data-type="formula"]:has(img[dataset-id="formula"])',
     ],
     parse: async (el) => {
       const host = location.host
       let latexContent = ''
       if (host.includes('baike.')) {
-        latexContent = el.getAttribute('dataset-value')
+        latexContent = getEle('img[dataset-id="formula"]', el).getAttribute('dataset-value')
       } else {
         const imgEl = el.querySelector('img') || el.closest('img')
         if (!imgEl || !imgEl.alt) return

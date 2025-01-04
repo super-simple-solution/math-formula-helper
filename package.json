@@ -25,6 +25,7 @@
     "vite-plugin-zip-pack": "^1.2.4"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
     "clipboard-polyfill": "^4.1.0",
     "hotkeys-js": "^3.13.7",
     "mathml-to-latex": "^1.4.3",
