@@ -11,7 +11,7 @@ export function $$(el, context) {
 export function getAttrs(el) {
   const res = {}
   for (const key in el.attributes) {
-    if (isNaN(+key)) {
+    if (!Number.isNaN(Number(key))) {
       res[key] = el.attributes[key].value
     }
   }
@@ -27,8 +27,8 @@ export function createEle(option) {
 }
 
 export function domMutation(targetNode, cb) {
-  const cbFun = debounce(function () {
-    cb(...arguments)
+  const cbFun = debounce((...args) => {
+    cb(...args)
     observer.disconnect()
   }, 200)
   const observer = new MutationObserver(cbFun)
@@ -39,10 +39,9 @@ export function domMutation(targetNode, cb) {
 // https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_debounce
 function debounce(func, wait, immediate) {
   let timeout
-  return () => {
-    const args = arguments
+  return function (...args) {
     clearTimeout(timeout)
-    timeout = setTimeout(function () {
+    timeout = setTimeout(() => {
       timeout = null
       if (!immediate) func.apply(this, args)
     }, wait)

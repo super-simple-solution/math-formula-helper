@@ -40,10 +40,14 @@ async function setPopoverContent(left, top, rule, finalTarget) {
   const finalContent = rule.pre(content)
   document
     .getElementById('book-btn')
-    .addEventListener('click', (event) => handleExplain(event, left, top, finalContent, latexPopover))
+    .addEventListener('click', (event) =>
+      handleExplain(event, left, top, finalContent, latexPopover),
+    )
   document
     .getElementById('copy-btn')
-    .addEventListener('click', (event) => handleCopy(event, rule, finalTarget, finalContent, latexPopover))
+    .addEventListener('click', (event) =>
+      handleCopy(event, rule, finalTarget, finalContent, latexPopover),
+    )
 }
 
 function handleExplain(event, left, top, finalContent, latexPopover) {

@@ -13,13 +13,17 @@ const toastConfig = {
 export function initClipboard() {
   // http webpage cannot use native clipboard api
   if (!clipboard) {
-    import('clipboard-polyfill').then((res) => (clipboard = res))
+    import('clipboard-polyfill').then((res) => {
+      clipboard = res
+    })
   }
 }
 
 export function initMathml() {
   if (!window.Mathml2latex) {
-    return import('mathml-to-latex').then((res) => (window.Mathml2latex = res.MathMLToLaTeX))
+    return import('mathml-to-latex').then((res) => {
+      window.Mathml2latex = res.MathMLToLaTeX
+    })
   }
   return Promise.resolve(true)
 }
@@ -41,7 +45,10 @@ export function copyLatex(latexContent, options = { text: 'Copied' }) {
   })
 }
 
-export function copyLatexAsImage(latexBlob, options = { text: 'LaTeX content not found, Copied it as Image' }) {
+export function copyLatexAsImage(
+  latexBlob,
+  options = { text: 'LaTeX content not found, Copied it as Image' },
+) {
   return clipboard
     .write([
       new ClipboardItem({
@@ -68,20 +75,20 @@ export function addCopiedStyle(el) {
 }
 
 export function svgToImage(svgElement) {
-  let { clientWidth: width, clientHeight: height } = svgElement
-  let clonedSvgElement = svgElement.cloneNode(true)
-  let outerHTML = clonedSvgElement.outerHTML
+  const { clientWidth: width, clientHeight: height } = svgElement
+  const clonedSvgElement = svgElement.cloneNode(true)
+  const outerHTML = clonedSvgElement.outerHTML
   const blob = new Blob([outerHTML], { type: 'image/svg+xml;charset=utf-8' })
   const blobURL = URL.createObjectURL(blob)
   return loadImage(blobURL).then((image) => {
-    let canvas = document.createElement('canvas')
+    const canvas = document.createElement('canvas')
     // 高分屏
     // increase the actual size of our canvas
     canvas.width = width * devicePixelRatio
     canvas.height = height * devicePixelRatio
 
     // ensure all drawing operations are scaled
-    let context = canvas.getContext('2d')
+    const context = canvas.getContext('2d')
     context.scale(devicePixelRatio, devicePixelRatio)
     // draw image in canvas starting left-0 , top - 0
     context.drawImage(image, 0, 0, width, height)

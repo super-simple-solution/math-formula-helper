@@ -32,7 +32,7 @@ export function injectCSS(file) {
 export function initEventHandler(contentReq) {
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const rdata = request.data
-    const tabId = sender.tab && sender.tab.id
+    const tabId = sender.tab?.id
     const handler = contentReq[request.greeting]
     if (handler) {
       handler(rdata, sendResponse, tabId)
