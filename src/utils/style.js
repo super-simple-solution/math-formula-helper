@@ -44,7 +44,10 @@ function generateCSS(selectorList) {
 
 function geneClass(classList, str = '') {
   const len = classList.length
-  return classList.reduce((cur, acc, curIndex) => cur + acc + str + (curIndex === len - 1 ? '' : ','), '')
+  return classList.reduce(
+    (cur, acc, curIndex) => cur + acc + str + (curIndex === len - 1 ? '' : ','),
+    '',
+  )
 }
 
 export default generateCSS

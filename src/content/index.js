@@ -1,7 +1,7 @@
 import '@/style/index.scss'
-import { initClipboard, createOpacityImage, formatCopiedText } from './util'
-import { rules, ImageAltRule } from './const'
 import hotkeys from 'hotkeys-js'
+import { ImageAltRule, rules } from './const'
+import { createOpacityImage, formatCopiedText, initClipboard } from './util'
 // import { handleTargetDom } from './targetDom'
 
 let count = 0
@@ -26,7 +26,7 @@ function init(resetCount) {
     data: [...rule.selectorList, ...ImageAltRule.selectorList],
   })
 
-  let curRule = canCopyAll ? ImageAltRule : rule
+  const curRule = canCopyAll ? ImageAltRule : rule
   const selector = curRule.selectorList.join()
 
   // document.body.addEventListener('click', (e) => handleTargetDom(e, curRule))
@@ -64,7 +64,9 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('scroll', () => {
   if (!canCopyAll) return
   const ruleSelector = rule.selectorList.join()
-  const elList = Array.from(document.querySelectorAll(ruleSelector)).filter((item) => !item.getAttribute('data-uuid'))
+  const elList = Array.from(document.querySelectorAll(ruleSelector)).filter(
+    (item) => !item.getAttribute('data-uuid'),
+  )
   if (!elList.length) return
   fullPageCopy(elList)
 })
@@ -77,18 +79,18 @@ document.addEventListener('copy', () => {
 async function fullPageCopy(targetList = []) {
   canCopyAll = true
   const ruleSelector = rule.selectorList.join()
-  let elList = targetList.length ? targetList : document.querySelectorAll(ruleSelector)
-  for (let el of elList) {
+  const elList = targetList.length ? targetList : document.querySelectorAll(ruleSelector)
+  for (const el of elList) {
     if (el.tagName === 'IMG' || !el.offsetHeight) continue
     const uuid = crypto.randomUUID()
     const parent = el.parentNode
-    let parentPosition = window.getComputedStyle(parent).position
+    const parentPosition = window.getComputedStyle(parent).position
     if (parentPosition === 'static') parent.style.position = 'relative'
     const content = await rule.parse(el)
     el.setAttribute('data-uuid', uuid)
     el.classList.add('sss-none-select')
     if (!content || content instanceof Blob) continue
-    let img = createOpacityImage({
+    const img = createOpacityImage({
       width: el.offsetWidth,
       height: el.offsetHeight,
       alt: content,
@@ -96,8 +98,8 @@ async function fullPageCopy(targetList = []) {
     })
     const imgContainer = document.createElement('span')
     imgContainer.className = 'sss-img-latex'
-    imgContainer.style.left = el.offsetLeft + 'px'
-    imgContainer.style.top = el.offsetTop + 'px'
+    imgContainer.style.left = `${el.offsetLeft}px`
+    imgContainer.style.top = `${el.offsetTop}px`
     imgContainer.appendChild(img)
     el.parentNode.insertBefore(imgContainer, el)
   }

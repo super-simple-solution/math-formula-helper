@@ -1,4 +1,4 @@
-import { copyLatex, copyLatexAsImage, addCopiedStyle, svgToImage, initMathml } from './util'
+import { addCopiedStyle, copyLatex, copyLatexAsImage, initMathml, svgToImage } from './util'
 
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
@@ -38,9 +38,8 @@ export const rules = {
           const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
           return latexContent
         })
-      } else {
-        return scriptEl.textContent
       }
+      return scriptEl.textContent
     },
     pre,
     post,
@@ -81,7 +80,10 @@ export const rules = {
     post,
   },
   math_jax_html: {
-    testUrl: ['https://www.mathreference.org/', 'https://www.sciencedirect.com/science/article/pii/S2095809919302279'],
+    testUrl: [
+      'https://www.mathreference.org/',
+      'https://www.sciencedirect.com/science/article/pii/S2095809919302279',
+    ],
     selectorList: ['mjx-container.MathJax'],
     parse: async (el) => {
       const mathEl = el.querySelector('mjx-assistive-mml')
@@ -169,18 +171,18 @@ function katexContentExtra(content) {
   const reg1 = /\s+[^\s\n]{1}[\s|\n][\s|\n]/g
   const reg2 = /\\begin{.+?end{\w+?}$/
   const latexPattern = 'begin{'
-  content = content.replace(reg1, '').trim()
-  if (content.includes(latexPattern) && content.match(reg2)) {
-    content = content.match(reg2)[0]
+  let refinedContent = content.replace(reg1, '').trim()
+  if (refinedContent.includes(latexPattern) && refinedContent.match(reg2)) {
+    refinedContent = refinedContent.match(reg2)[0]
   }
-  return content
+  return refinedContent
 }
 
 function latexRefine(content) {
-  content = content.trim()
-  if (!content.length) return ''
-  if (content.includes('\\\\') && !content.startsWith('\\begin')) {
-    return `\\begin{array}{c} ${content} \\end{array}`
+  const trimmedContent = content.trim()
+  if (!trimmedContent.length) return ''
+  if (trimmedContent.includes('\\\\') && !trimmedContent.startsWith('\\begin')) {
+    return `\\begin{array}{c} ${trimmedContent} \\end{array}`
   }
-  return content.replace(/&nbsp;/g, '\\enspace ')
+  return trimmedContent.replace(/&nbsp;/g, '\\enspace ')
 }

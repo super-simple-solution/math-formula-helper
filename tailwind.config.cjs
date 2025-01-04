@@ -1,4 +1,5 @@
 module.exports = {
+  prefix: 'sss-',
   theme: {
     extend: {},
   },
@@ -6,5 +7,5 @@ module.exports = {
     extend: {},
   },
   plugins: [],
-  content: ['./src/**/*.{js,jsx,ts,tsx,vue}'],
+  content: ['./src/**/*.{js,jsx,ts,tsx,vue,html}'],
 }
