@@ -29,7 +29,50 @@ function init(resetCount) {
   const curRule = canCopyAll ? ImageAltRule : rule
   const selector = curRule.selectorList.join()
 
-  // document.body.addEventListener('click', (e) => handleTargetDom(e, curRule))
+  document.body.addEventListener('mouseover', (e) => {
+    const target = e.target
+    const finalTarget = target.closest(selector)
+    if (!finalTarget) return
+
+    if (window.getComputedStyle(finalTarget).position === 'static') {
+      finalTarget.style.position = 'relative'
+    }
+
+    let tooltip = document.querySelector('.sss-tooltip')
+    if (!tooltip) {
+      tooltip = document.createElement('div')
+      tooltip.classList.add(
+        'sss-tooltip',
+        'sss-bg-black',
+        'sss-text-white',
+        'sss-p-1',
+        'sss-rounded-sm',
+        'sss-absolute',
+      )
+
+      // const parentRect = finalTarget.getBoundingClientRect()
+      tooltip.style.left = '0'
+      tooltip.style.position = 'absolute'
+      tooltip.style.top = '0px' // 向上偏移（高度 + 间隙）
+      tooltip.style.transform = 'translateY(-100%)' // 向上平移
+      finalTarget.appendChild(tooltip) // 将 Tooltip 添加到 DOM
+    }
+    tooltip.style.display = 'block'
+    curRule.parse(finalTarget).then((res) => {
+      tooltip.textContent = res
+    })
+  })
+
+  document.body.addEventListener('mouseout', (e) => {
+    const target = e.target
+    const finalTarget = target.closest(selector)
+    if (!finalTarget) return
+
+    const tooltip = finalTarget.querySelector('.sss-tooltip') // 改为在finalTarget范围内查找
+    if (tooltip) {
+      tooltip.remove() // 完全移除元素
+    }
+  })
 
   document.body.addEventListener('click', (e) => {
     const target = e.target
