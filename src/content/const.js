@@ -1,5 +1,5 @@
-import { addCopiedStyle, copyLatex, copyLatexAsImage, initMathml, svgToImage } from './util'
 import { getEle } from '@/utils'
+import { addCopiedStyle, copyLatex, copyLatexAsImage, initMathml, svgToImage } from './util'
 
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
