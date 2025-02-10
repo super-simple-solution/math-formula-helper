@@ -55,11 +55,6 @@ export const rules = {
     parse: async (el) => {
       const annotationEl = el.querySelector('.katex-mathml annotation')
 
-      const microsoftTexEl = el
-        .closest(
-          '[class^="Answer_resultsAnswer"]:has(.hidden),[class^="Step_stepExpression"]:has(.hidden)',
-        )
-        .querySelector('.hidden')
       // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
       const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
       const mathTexElDomainList = ['chat.deepseek', 'csdn.net']
@@ -70,10 +65,15 @@ export const rules = {
       if (annotationEl?.getAttribute('encoding').includes('application/x-tex')) {
         latexContent = annotationEl.textContent
       } else if (host.includes('mathsolver.microsoft')) {
+        const microsoftTexEl = el
+          .closest(
+            '[class^="Answer_resultsAnswer"]:has(.hidden),[class^="Step_stepExpression"]:has(.hidden)',
+          )
+          ?.querySelector('.hidden')
         // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
         latexContent = microsoftTexEl.textContent
       } else if (mathTexEl) {
-        if (mathTexElDomainList.some((domain) => host.includes(domain))) {
+        if (mathTexElDomainList.find((domain) => host.includes(domain))) {
           latexContent = katexContentExtra(mathTexEl.textContent)
         } else if (host.includes('leetcode.')) {
           const lastChild = mathTexEl.lastChild
