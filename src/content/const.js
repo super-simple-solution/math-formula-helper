@@ -54,25 +54,32 @@ export const rules = {
     selectorList: ['.katex'],
     parse: async (el) => {
       const annotationEl = el.querySelector('.katex-mathml annotation')
-      // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
-      const hiddenTexEl = el.closest('.answer')?.previousElementSibling
+
+      const microsoftTexEl = el
+        .closest(
+          '[class^="Answer_resultsAnswer"]:has(.hidden),[class^="Step_stepExpression"]:has(.hidden)',
+        )
+        .querySelector('.hidden')
       // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
       const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
+      const mathTexElDomainList = ['chat.deepseek', 'csdn.net']
+
       const host = location.host
       // 获取数学公式dom及属性
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding').includes('application/x-tex')) {
         latexContent = annotationEl.textContent
-      } else if (hiddenTexEl?.classList.contains('hidden')) {
-        latexContent = hiddenTexEl.textContent
+      } else if (host.includes('mathsolver.microsoft')) {
+        // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
+        latexContent = microsoftTexEl.textContent
       } else if (mathTexEl) {
-        if (host.includes('leetcode.')) {
+        if (mathTexElDomainList.some((domain) => host.includes(domain))) {
+          latexContent = katexContentExtra(mathTexEl.textContent)
+        } else if (host.includes('leetcode.')) {
           const lastChild = mathTexEl.lastChild
           if (lastChild.nodeType === 3) {
             latexContent = lastChild.textContent
           }
-        } else if (host.includes('csdn.net')) {
-          latexContent = katexContentExtra(mathTexEl.textContent)
         }
       }
       return latexContent

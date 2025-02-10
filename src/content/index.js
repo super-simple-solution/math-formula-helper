@@ -81,12 +81,12 @@ function init(resetCount) {
     })
   })
 
-  document.body.addEventListener('mouseout', () => {
-    const tooltip = document.querySelector('.sss-tooltip')
-    if (tooltip) {
-      tooltip.remove() // 完全移除元素
-    }
-  })
+  // document.body.addEventListener('mouseout', () => {
+  //   const tooltip = document.querySelector('.sss-tooltip')
+  //   if (tooltip) {
+  //     tooltip.remove() // 完全移除元素
+  //   }
+  // })
 
   document.body.addEventListener('click', (e) => {
     const target = e.target
