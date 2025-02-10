@@ -2,7 +2,6 @@ import '@/style/index.scss'
 import hotkeys from 'hotkeys-js'
 import { ImageAltRule, rules } from './const'
 import { createOpacityImage, formatCopiedText, initClipboard } from './util'
-// import { handleTargetDom } from './targetDom'
 
 let count = 0
 let inited = false
@@ -34,41 +33,56 @@ function init(resetCount) {
     const finalTarget = target.closest(selector)
     if (!finalTarget) return
 
-    if (window.getComputedStyle(finalTarget).position === 'static') {
-      finalTarget.style.position = 'relative'
-    }
-
     let tooltip = document.querySelector('.sss-tooltip')
     if (!tooltip) {
       tooltip = document.createElement('div')
-      tooltip.classList.add(
-        'sss-tooltip',
-        'sss-bg-black',
-        'sss-text-white',
-        'sss-p-1',
-        'sss-rounded-sm',
-        'sss-absolute',
-      )
+      tooltip.classList.add('sss-tooltip')
+      document.body.appendChild(tooltip) // 添加到 body
 
-      // const parentRect = finalTarget.getBoundingClientRect()
-      tooltip.style.left = '0'
-      tooltip.style.position = 'absolute'
-      tooltip.style.top = '0px' // 向上偏移（高度 + 间隙）
-      tooltip.style.transform = 'translateY(-100%)' // 向上平移
-      finalTarget.appendChild(tooltip) // 将 Tooltip 添加到 DOM
+      Object.assign(tooltip.style, {
+        position: 'absolute',
+        color: 'white',
+        padding: '8px',
+        borderRadius: '4px',
+        zIndex: '9999',
+        display: 'none',
+        transition: 'opacity 0.2s ease',
+      })
+      updateTooltipTheme(tooltip) // 初始化时设置主题色
     }
-    tooltip.style.display = 'block'
+
+    const rect = finalTarget.getBoundingClientRect()
+    const scrollX = window.scrollX || window.pageXOffset
+    const scrollY = window.scrollY || window.pageYOffset
+    // 设置 tooltip 位置（显示在元素下方）
+    Object.assign(tooltip.style, {
+      display: 'block',
+      top: `${rect.bottom + scrollY + 5}px`,
+      left: `${rect.left + scrollX + rect.width / 2}px`,
+      transform: 'translateX(-50%)', // 让 tooltip 居中
+    })
+
     curRule.parse(finalTarget).then((res) => {
       tooltip.textContent = res
+      updateTooltipTheme(tooltip)
+
+      const tooltipRect = tooltip.getBoundingClientRect()
+      if (tooltipRect.bottom > window.innerHeight) {
+        tooltip.style.top = `${rect.top + scrollY - tooltipRect.height}px`
+      }
+      if (tooltipRect.right > window.innerWidth) {
+        tooltip.style.left = `${window.innerWidth - tooltipRect.width - 5}px`
+        tooltip.style.transform = 'none'
+      }
+      if (tooltipRect.left < 0) {
+        tooltip.style.left = '5px'
+        tooltip.style.transform = 'none'
+      }
     })
   })
 
-  document.body.addEventListener('mouseout', (e) => {
-    const target = e.target
-    const finalTarget = target.closest(selector)
-    if (!finalTarget) return
-
-    const tooltip = finalTarget.querySelector('.sss-tooltip') // 改为在finalTarget范围内查找
+  document.body.addEventListener('mouseout', () => {
+    const tooltip = document.querySelector('.sss-tooltip')
     if (tooltip) {
       tooltip.remove() // 完全移除元素
     }
@@ -147,3 +161,18 @@ async function fullPageCopy(targetList = []) {
     el.parentNode.insertBefore(imgContainer, el)
   }
 }
+
+const updateTooltipTheme = (tooltip) => {
+  const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+  Object.assign(tooltip.style, {
+    background: isDarkMode ? 'white' : 'rgba(0, 0, 0, 0.65)',
+    color: isDarkMode ? 'black' : 'white',
+    border: isDarkMode ? '1px solid #ddd' : 'none',
+  })
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  const tooltip = document.querySelector('.sss-tooltip')
+  if (tooltip) updateTooltipTheme(tooltip)
+})
