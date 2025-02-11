@@ -5,6 +5,7 @@ const containerStyle = `{
 
 const containerHoverStyle = `{
   background-color: rgba(220, 252, 231, 0.3);
+  display: inline-block;
 }`
 
 // :after
