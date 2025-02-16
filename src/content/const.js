@@ -50,14 +50,16 @@ export const rules = {
       'https://juejin.cn/post/7210175991837507621',
       'http://wujiawen.xyz/posts/notes/articles/%E7%AC%94%E8%AE%B0llama_note.html',
       'https://blog.csdn.net/qq_35357274/article/details/109935169',
+      'https://ncatlab.org/nlab/show/covering+space', //.maruku-equation
+      'https://www.bananaspace.org/wiki/%E8%AE%B2%E4%B9%89:%E6%A6%82%E7%8E%87%E4%B8%8E%E6%95%B0%E7%90%86%E7%BB%9F%E8%AE%A1(PKU-COE)/%E6%A6%82%E7%8E%87%E8%AE%BA%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/%E5%8F%A4%E5%85%B8%E6%A6%82%E5%9E%8B',
     ],
-    selectorList: ['.katex'],
+    selectorList: ['.katex', '.maruku-equation'],
     parse: async (el) => {
-      const annotationEl = el.querySelector('.katex-mathml annotation')
+      const annotationEl =
+        el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
 
-      // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
       const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
-      const mathTexElDomainList = ['chat.deepseek', 'csdn.net']
+      const mathTexElDomainList = ['chat.deepseek', 'csdn.net', 'bananaspace.org']
 
       const host = location.host
       // 获取数学公式dom及属性
@@ -76,6 +78,7 @@ export const rules = {
         if (mathTexElDomainList.find((domain) => host.includes(domain))) {
           latexContent = katexContentExtra(mathTexEl.textContent)
         } else if (host.includes('leetcode.')) {
+          // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
           const lastChild = mathTexEl.lastChild
           if (lastChild.nodeType === 3) {
             latexContent = lastChild.textContent

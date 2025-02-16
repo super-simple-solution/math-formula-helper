@@ -5,7 +5,6 @@ const containerStyle = `{
 
 const containerHoverStyle = `{
   background-color: rgba(220, 252, 231, 0.3);
-  display: inline-block;
 }`
 
 // :after
@@ -15,7 +14,6 @@ const copyStyle = `{
   z-index: 1;
   top: 0;
   right: 0;
-  display: inline-block;
   visibility: hidden;
   width: 20px;
   height: 20px;
