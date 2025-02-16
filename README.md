@@ -14,8 +14,8 @@
 ### How to run locally (for developer)
 #### Requirements
 - [Nodejs](https://nodejs.org/en/download) and [pnpm](https://pnpm.io/installation)
-1. pnpm i // install dependencies
-2. pnpm build // you need build it then drop `./dist` folder to your browser
-3. pnpm dev // for local development only
+1. `pnpm i` // install dependencies
+2. `pnpm build` // you need build it then drop `./dist` folder to your browser
+3. `pnpm dev` // for local development only
 
 The source code is in the `./dist` folder. 
