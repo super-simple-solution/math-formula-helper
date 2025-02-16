@@ -1,0 +1,31 @@
+name: Manual Build Extension
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
+
+    - name: Install dependencies
+      run: pnpm install
+
+    - name: Build project (Auto-generate ZIP)
+      run: pnpm build  # 该命令会自动生成 latex_copy.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: browser-extension
+        path: latex_copy.zip  # 直接使用自动生成的 ZIP 文件

@@ -23,7 +23,7 @@ export default defineConfig({
       applyFixes: true,
       failOnError: true,
     }),
-    zipPack({ outDir: './' }),
+    zipPack({ outDir: './', outFileName: 'latex_copy.zip' }),
   ],
   css: {
     // https://github.com/vitejs/vite/discussions/8216
