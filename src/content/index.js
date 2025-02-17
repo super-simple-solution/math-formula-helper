@@ -29,6 +29,8 @@ function init(resetCount) {
   const selector = curRule.selectorList.join()
 
   document.body.addEventListener('mouseover', (e) => {
+    if (!window.showTooltip) return
+
     const target = e.target
     const finalTarget = target.closest(selector)
     if (!finalTarget) return
@@ -81,12 +83,12 @@ function init(resetCount) {
     })
   })
 
-  // document.body.addEventListener('mouseout', () => {
-  //   const tooltip = document.querySelector('.sss-tooltip')
-  //   if (tooltip) {
-  //     tooltip.remove() // 完全移除元素
-  //   }
-  // })
+  document.body.addEventListener('mouseout', () => {
+    const tooltip = document.querySelector('.sss-tooltip')
+    if (tooltip) {
+      tooltip.remove() // 完全移除元素
+    }
+  })
 
   document.body.addEventListener('click', (e) => {
     const target = e.target
@@ -175,4 +177,13 @@ const updateTooltipTheme = (tooltip) => {
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   const tooltip = document.querySelector('.sss-tooltip')
   if (tooltip) updateTooltipTheme(tooltip)
+})
+
+chrome.storage.sync.get(['showTooltip'], (data) => {
+  window.showTooltip = data.showTooltip ?? true
+})
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.showTooltip) {
+    window.showTooltip = changes.showTooltip.newValue
+  }
 })

@@ -17,7 +17,7 @@
     "service_worker": "src/service_worker.js",
     "type": "module"
   },
-  "permissions": ["scripting"],
+  "permissions": ["scripting", "storage"],
   "host_permissions": ["<all_urls>"],
   "options_ui": {
     "page": "src/options/index.html",
