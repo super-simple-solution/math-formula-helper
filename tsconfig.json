@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "useDefineForClassFields": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noImplicitThis": true,
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "outDir": "./node_modules/.cache",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "types": [
+      "vite/client",
+      "chrome"
+    ],
+    "lib": [
+      "esnext",
+      "dom",
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "typeRoots": [
+    "./node_modules/@types",
+    "./src/types/",
+  ],
+}
