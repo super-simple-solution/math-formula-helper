@@ -21,6 +21,7 @@ export const rules = {
       'https://www.andlearning.org/math-formula/',
       'https://zhuanlan.zhihu.com/p/115277553',
       'https://wuli.wiki/online/ODEa1.html',
+      'https://ieeexplore.ieee.org/document/9072123',
     ],
     selectorList: [
       '.MathJax_Preview + .MathJax',
@@ -50,10 +51,10 @@ export const rules = {
       'https://juejin.cn/post/7210175991837507621',
       'http://wujiawen.xyz/posts/notes/articles/%E7%AC%94%E8%AE%B0llama_note.html',
       'https://blog.csdn.net/qq_35357274/article/details/109935169',
-      'https://ncatlab.org/nlab/show/covering+space', //.maruku-equation
+      'https://ncatlab.org/nlab/show/covering+space', //.maruku-mathml
       'https://www.bananaspace.org/wiki/%E8%AE%B2%E4%B9%89:%E6%A6%82%E7%8E%87%E4%B8%8E%E6%95%B0%E7%90%86%E7%BB%9F%E8%AE%A1(PKU-COE)/%E6%A6%82%E7%8E%87%E8%AE%BA%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5/%E5%8F%A4%E5%85%B8%E6%A6%82%E5%9E%8B',
     ],
-    selectorList: ['.katex', '.maruku-equation'],
+    selectorList: ['.katex', '.maruku-mathml'],
     parse: async (el) => {
       const annotationEl =
         el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
