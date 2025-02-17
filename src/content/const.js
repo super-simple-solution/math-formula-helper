@@ -10,8 +10,8 @@ export const ImageAltRule = {
 
 export const rules = {
   math_ltx: {
-    testUrl: ['https://dlmf.nist.gov/5.12'],
-    selectorList: ['.ltx_equation .ltx_Math'],
+    testUrl: ['https://dlmf.nist.gov/5.12', 'https://arxiv.org/html/2412.11563v1'],
+    selectorList: ['.ltx_equation .ltx_Math', 'math.ltx_math_unparsed', 'math.ltx_Math'],
     parse: async (el) => el.getAttribute('alttext'),
     pre,
     post,
