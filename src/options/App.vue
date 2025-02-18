@@ -1,8 +1,8 @@
 
 <script setup>
-import { ref } from 'vue'
 import { siderMenuList } from './const'
 
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 const activeMenu = ref(siderMenuList[0].value)
 </script>
 <template>
