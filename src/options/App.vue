@@ -4,6 +4,8 @@ import { siderMenuList } from './const'
 
 // biome-ignore lint/correctness/noUnusedVariables: <explanation>
 const activeMenu = ref(siderMenuList[0].value)
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+const showTooltip = ref(true)
 </script>
 <template>
   <div class="sss-flex sss-justify-center sss-h-screen">
@@ -27,12 +29,12 @@ const activeMenu = ref(siderMenuList[0].value)
           <div class="sss-text-xl sss-font-bold">提示框信息</div>
           <div class="sss-mt-8 sss-rounded-lg sss-overflow-hidden sss-shadow">
             <div class="sss-bg-slate-200 sss-px-10 sss-pt-10">
-              <img src="/assets/images/tooltip-demo.png" alt="" class="sss-rounded-t-md">
+              <img :src="`/assets/images/${showTooltip ? '' : 'hidden-'}tooltip.png`" alt="" class="sss-rounded-t-md">
             </div>
             <div class="sss-flex sss-justify-between sss-p-4">
               <div class="sss-text-base">鼠标hover到Latex上时显示</div>
               <label class="switch">
-                <input type="checkbox" id="tooltipSwitch" checked>
+                <input type="checkbox" id="tooltipSwitch" checked @click="() => showTooltip = !showTooltip">
                 <span class="slider"></span>
               </label>
             </div>

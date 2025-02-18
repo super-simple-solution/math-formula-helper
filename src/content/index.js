@@ -29,7 +29,7 @@ function init(resetCount) {
   const selector = curRule.selectorList.join()
 
   document.body.addEventListener('mouseover', (e) => {
-    if (!window.showTooltip) return
+    if (window.showTooltip) return
 
     const target = e.target
     const finalTarget = target.closest(selector)
@@ -179,6 +179,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
   if (tooltip) updateTooltipTheme(tooltip)
 })
 
+//是否展示latex info
 chrome.storage.sync.get(['showTooltip'], (data) => {
   window.showTooltip = data.showTooltip ?? true
 })
