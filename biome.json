@@ -2,21 +2,41 @@
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "organizeImports": { "enabled": true },
   "files": {
-    "ignore": ["node_modules", "dist", "out", "build", "public", "tsconfig.*", ".vscode"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      "out",
+      "build",
+      "public",
+      "tsconfig.*",
+      ".vscode",
+      ".nx",
+      "**/components/ui/*.tsx"
+    ]
   },
   "linter": {
     "enabled": true,
     "rules": {
+      "a11y": {
+        "useKeyWithClickEvents": "off"
+      },
+      "nursery": {
+        "useSortedClasses": "error"
+      },
       "suspicious": {
-        "noConsoleLog": "warn",
+        "noConsoleLog": "off",
         "noEmptyInterface": "off",
         "noArrayIndexKey": "warn",
         "noExplicitAny": "off"
       },
       "recommended": true,
       "correctness": {
+        "noChildrenProp": "off",
         "noUnusedVariables": "warn",
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "off"
+      },
+      "complexity": {
+        "noForEach": "off"
       },
       "style": {
         "useBlockStatements": "off",
@@ -31,8 +51,7 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "enabled": true,
-    "lineWidth": 100,
-    "ignore": ["node_modules", "dist", "out", "build", "public", "tsconfig.*", ".vscode"]
+    "lineWidth": 100
   },
   "javascript": {
     "formatter": {
