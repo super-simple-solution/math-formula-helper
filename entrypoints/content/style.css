@@ -4,7 +4,8 @@
   font-size: 0;
 }
 
-.sss-none-select, .sss-none-select * {
+.sss-none-select,
+.sss-none-select * {
   user-select: none;
 }
 
@@ -12,10 +13,11 @@ latex-popover {
   position: absolute;
   background: #fff;
   border: 1px solid;
-  border-color: var(--gpts-bg-darken3, rgba(0, 0, 0, .06));
+  border-color: var(--gpts-bg-darken3, rgba(0, 0, 0, 0.06));
   padding: 2px 4px;
   border-radius: 8px;
-  box-shadow: rgba(0, 0, 0, 0.12) 0px 3px 6px -4px, rgba(0, 0, 0, 0.08) 0px 6px 16px 0px, rgba(0, 0, 0, 0.05) 0px 9px 28px 8px;
+  box-shadow: rgba(0, 0, 0, 0.12) 0px 3px 6px -4px, rgba(0, 0, 0, 0.08) 0px 6px 16px 0px,
+    rgba(0, 0, 0, 0.05) 0px 9px 28px 8px;
   animation: fadein .3s ease-in-out;
 }
 

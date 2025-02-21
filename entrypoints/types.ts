@@ -1,7 +1,7 @@
 export enum MessageFrom {
-  contentScript = "contentScript",
-  background = "background",
-  sidePanel = "sidePanel",
+  contentScript = 'contentScript',
+  background = 'background',
+  sidePanel = 'sidePanel',
 }
 
-export default MessageFrom;
+export default MessageFrom

@@ -6,10 +6,10 @@
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "[vue]": {
+  "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "[typescript]": {
+  "[typescriptreact]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
 }

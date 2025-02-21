@@ -3,6 +3,6 @@ export function formInit() {
     problem: '',
     email: '',
     web_link: '',
-    image_urls: []
+    image_urls: [],
   }
 }

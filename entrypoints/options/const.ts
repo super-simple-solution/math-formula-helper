@@ -1,10 +1,10 @@
 export const siderMenuList = [
   {
-    label: '$...$',
-    value: 'dollar',
+    label: 'Config',
+    value: 'config',
   },
   {
-    label: '帮助与反馈',
+    label: 'Feedback',
     value: 'feedback',
   },
 ] as const

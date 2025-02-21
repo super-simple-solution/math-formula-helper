@@ -146,7 +146,9 @@ export const rules = {
       const host = location.host
       let latexContent = ''
       if (host.includes('baike.')) {
-        latexContent = getEle('img[dataset-id="formula"]', el)?.getAttribute('dataset-value') as string
+        latexContent = getEle('img[dataset-id="formula"]', el)?.getAttribute(
+          'dataset-value',
+        ) as string
       } else {
         const imgEl = el.querySelector('img') || el.closest('img')
         if (!imgEl || !imgEl.alt) return
@@ -193,7 +195,7 @@ function katexContentExtra(content: string) {
   if (refinedContent.includes(latexPattern)) {
     const matchRes = refinedContent.match(reg2)
     if (matchRes?.length) {
-      refinedContent = matchRes[0] 
+      refinedContent = matchRes[0]
     }
   }
   return refinedContent

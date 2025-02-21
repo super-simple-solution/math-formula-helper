@@ -1,22 +1,15 @@
-import Toastify from 'toastify-js'
-import 'toastify-js/src/toastify.css'
+import { toast } from '@/lib'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import { MathMLToLaTeX } from 'mathml-to-latex'
 
-let clipboard: Clipboard = navigator.clipboard || {
-  ...clipboardPolyfill,
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  dispatchEvent: () => true,
-} as Clipboard
-
-const toastConfig = {
-  duration: 3000,
-  position: 'right',
-  style: {
-    background: 'linear-gradient(to right, #00b09b, #96c93d)',
-  },
-} as const
+let clipboard: Clipboard =
+  navigator.clipboard ||
+  ({
+    ...clipboardPolyfill,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => true,
+  } as Clipboard)
 
 export async function initClipboard() {
   if (!clipboard) {
@@ -41,23 +34,19 @@ export async function formatCopiedText() {
 
 export async function copyLatex(latexContent: string, options = { text: 'Copied' }) {
   await clipboard.writeText(latexContent)
-  console.log(12312312313, options)
-  Toastify({
-      ...toastConfig,
-      text: options.text,
-    }).showToast()
+  toast(options)
 }
 
-export async function copyLatexAsImage(latexBlob: Blob, options = { text: 'LaTeX content not found, Copied it as Image' }) {
+export async function copyLatexAsImage(
+  latexBlob: Blob,
+  options = { text: 'LaTeX content not found, Copied it as Image' },
+) {
   await clipboard.write([
     new ClipboardItem({
       [latexBlob.type]: latexBlob,
     }),
   ])
-  Toastify({
-    ...toastConfig,
-    text: options.text,
-  }).showToast()
+  toast(options)
 }
 
 export function addCopiedStyle(el: HTMLElement) {
@@ -89,7 +78,7 @@ export async function svgToImage(svgElement: SVGSVGElement): Promise<Blob> {
   const context = canvas.getContext('2d')
   if (!context) throw new Error('Could not get canvas context')
   context.scale(devicePixelRatio, devicePixelRatio)
-   // draw image in canvas starting left-0 , top - 0
+  // draw image in canvas starting left-0 , top - 0
   context.drawImage(image, 0, 0, width, height)
 
   return getCanvasBlob(canvas)
@@ -112,7 +101,12 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   })
 }
 
-export function createOpacityImage(options: { width: number; height: number; id: string; alt: string }): HTMLImageElement | undefined {
+export function createOpacityImage(options: {
+  width: number
+  height: number
+  id: string
+  alt: string
+}): HTMLImageElement | undefined {
   const { width, height, id, alt } = options
   const canvas = document.createElement('canvas')
   canvas.width = width

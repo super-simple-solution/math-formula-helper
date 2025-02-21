@@ -55,13 +55,13 @@ function eventInit() {
       default:
     }
   })
-  
+
   document.addEventListener('visibilitychange', () => {
     if (!inited && document.visibilityState === 'visible') {
       init(true)
     }
   })
-  
+
   document.addEventListener('scroll', () => {
     if (!canCopyAll) return
     const ruleSelector = rule.selectorList.join()
@@ -71,13 +71,12 @@ function eventInit() {
     if (!elList.length) return
     fullPageCopy(elList)
   })
-  
+
   document.addEventListener('copy', () => {
     if (!canCopyAll) return
     formatCopiedText()
   })
 }
-
 
 async function fullPageCopy(targetList = []) {
   canCopyAll = true
@@ -107,4 +106,3 @@ async function fullPageCopy(targetList = []) {
     el.parentNode.insertBefore(imgContainer, el)
   }
 }
-
