@@ -120,7 +120,7 @@ export const rules = {
     },
     post: async (el: HTMLElement, content: string | Blob) => {
       if (!content) return
-      let copyPromise
+      let copyPromise: Promise<void>
       if (content instanceof Blob) {
         copyPromise = copyLatexAsImage(content)
       } else {

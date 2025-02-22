@@ -1,9 +1,9 @@
 import './style.css'
-import { contentInit } from './init'
+import { latexInit } from './init'
 
 export default defineContentScript({
   matches: ['<all_urls>'],
   async main() {
-    contentInit()
+    latexInit()
   },
 })

@@ -1,8 +1,8 @@
 import logo from '@/assets/icons/128.png'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useState } from 'react'
-import { Config } from './components/config'
 import { Feedback } from './components/feedback'
+import { Preference } from './components/preference'
 import { siderMenuList } from './const'
 
 type TabValue = (typeof siderMenuList)[number]['value']
@@ -12,7 +12,7 @@ function App() {
   const [curTab, setCurTab] = useState<TabValue>(defaultTab)
 
   const contentMap: Record<TabValue, React.ReactNode> = {
-    config: <Config />,
+    preference: <Preference />,
     feedback: <Feedback />,
   }
 

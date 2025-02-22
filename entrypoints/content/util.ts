@@ -1,6 +1,22 @@
 import { toast } from '@/lib'
+import { latexFormat } from '@/lib/latex'
+import { type Prefer, getPreference, watchPreference } from '@/lib/storage'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import { MathMLToLaTeX } from 'mathml-to-latex'
+
+let preferData: Prefer
+
+function initPrefer() {
+  getPreference().then(setPrefer)
+}
+
+initPrefer()
+
+function setPrefer(prefer: Prefer) {
+  preferData = prefer
+}
+
+watchPreference(setPrefer)
 
 let clipboard: Clipboard =
   navigator.clipboard ||
@@ -21,6 +37,7 @@ export async function initClipboard() {
     } as Clipboard
   }
 }
+
 export async function initMathml() {
   if (!window.Mathml2latex) {
     window.Mathml2latex = MathMLToLaTeX
@@ -33,8 +50,10 @@ export async function formatCopiedText() {
 }
 
 export async function copyLatex(latexContent: string, options = { text: 'Copied' }) {
-  await clipboard.writeText(latexContent)
-  toast(options)
+  await clipboard.writeText(latexFormat(latexContent, preferData.format_signs))
+  if (preferData.show_toast) {
+    toast(options)
+  }
 }
 
 export async function copyLatexAsImage(
@@ -46,7 +65,9 @@ export async function copyLatexAsImage(
       [latexBlob.type]: latexBlob,
     }),
   ])
-  toast(options)
+  if (preferData.show_toast) {
+    toast(options)
+  }
 }
 
 export function addCopiedStyle(el: HTMLElement) {
@@ -121,6 +142,6 @@ export function createOpacityImage(options: {
   const img = new Image()
   img.src = imageDataURL
   img.id = id
-  img.alt = alt
+  img.alt = latexFormat(alt, preferData.format_signs)
   return img
 }

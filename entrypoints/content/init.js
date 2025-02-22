@@ -3,7 +3,7 @@ import hotkeys from 'hotkeys-js'
 import { ImageAltRule, rules } from './const'
 import { createOpacityImage, formatCopiedText, initClipboard } from './util'
 
-export function contentInit() {
+export function latexInit() {
   init(true)
 }
 

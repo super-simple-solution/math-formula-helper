@@ -1,7 +1,7 @@
 export const siderMenuList = [
   {
-    label: 'Config',
-    value: 'config',
+    label: 'Preference',
+    value: 'preference',
   },
   {
     label: 'Feedback',
