@@ -16,4 +16,12 @@ export default defineBackground(() => {
   }
 
   initEventHandler(contentReq)
+
+  // browser.runtime.onInstalled.addListener(({ reason }) => {
+  //   if (details.reason === 'uninstall') {
+  //     chrome.tabs.create({
+  //       url: 'https://docs.google.com/forms/d/e/1FAIpQLScID-Uviu6jAaq-bL2lN01lg4H1eEFszzsKa8q7MtAhzRZKMg/viewform?usp=dialog',
+  //     })
+  //   }
+  // })
 })

@@ -39,7 +39,7 @@ function init(resetCount) {
     if (!finalTarget) return
     curRule.parse(finalTarget).then((res) => {
       const content = curRule.pre(res)
-      curRule.post(finalTarget, `$${content}$`)
+      curRule.post(finalTarget, content)
     })
   })
 }

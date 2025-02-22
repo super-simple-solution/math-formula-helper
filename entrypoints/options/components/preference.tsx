@@ -43,7 +43,9 @@ const symbolList: SymbolItem[] = [
 ]
 
 const FormSchema = z.object({
-  format_signs: z.string().default(LatexSymbol.Inline),
+  format_signs: z
+    .enum(Object.values(LatexSymbol) as [string, ...string[]])
+    .default(LatexSymbol.Inline),
   show_toast: z.boolean().default(true),
 })
 
@@ -68,8 +70,7 @@ export function Preference() {
   })
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data, 'data')
-    // setPreference(data)
+    setPreference(data)
     toast({
       text: 'Your preference Saved',
     })
@@ -94,19 +95,22 @@ export function Preference() {
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <RadioGroup defaultValue={field.value}>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value}>
                       {symbolList.map((item) => (
-                        <div key={item.symbol} className="flex items-center space-x-2">
-                          <div className="flex-1">
-                            <RadioGroupItem value={item.symbol} id="r1" />
-                            <Label className="ml-4" htmlFor={item.symbol}>
+                        <div
+                          key={item.symbol}
+                          className="w-full flex items-center justify-between gap-2"
+                        >
+                          <div>
+                            <RadioGroupItem {...field} value={item.symbol} id={item.symbol} />
+                            <Label className="ml-4 cursor-pointer" htmlFor={item.symbol}>
                               {item.title}
                             </Label>
                           </div>
-                          <div className="flex">
-                            <div className="flex-1">{latexDemo}</div>
-                            <div className="">=&gt;</div>
-                            <div className="flex-1">{parserMap[item.symbol](latexDemo)}</div>
+                          <div className="w-[150px] flex gap-2">
+                            <div>{latexDemo}</div>
+                            <div>=&gt;</div>
+                            <div>{parserMap[item.symbol](latexDemo)}</div>
                           </div>
                         </div>
                       ))}

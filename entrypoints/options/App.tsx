@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div className="flex h-screen justify-center">
-      <div className="w-2/3 min-w-[600px] max-w-[1000px]">
+      <div className="min-w-[700px] max-w-[1200px]">
         <Tabs
           defaultValue={curTab}
           orientation="vertical"
