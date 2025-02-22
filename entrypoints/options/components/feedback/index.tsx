@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { FormSchema } from './const'
-import { formInit } from './util'
+import { feedbackApi, formInit, sendTelegramMessage, uploadImage } from './util'
 
 export function Feedback() {
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -17,7 +17,7 @@ export function Feedback() {
   })
   const [imageUrls, setImageUrls] = useState<string[]>([])
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (imageUrls.length > 4) {
       form.setError('image_urls', {
         type: 'manual',
@@ -26,8 +26,10 @@ export function Feedback() {
       return
     }
     data.image_urls = imageUrls
+    await feedbackApi(data)
+    await sendTelegramMessage('littlexuexue', 'xxxx')
     toast({
-      text: 'You submitted the following values:',
+      text: 'Thank you! Your feedback has been received and is greatly appreciated! 🌟',
     })
   }
   const handleRemoveImage = (index: number) => {
@@ -38,15 +40,15 @@ export function Feedback() {
       form.clearErrors('image_urls')
     }
   }
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string
-        setImageUrls([...imageUrls, imageUrl])
+      const imageUrl = await uploadImage(file)
+      if (imageUrl) {
+        setImageUrls((prevUrls) => [...prevUrls, imageUrl])
+      } else {
+        console.error('Failed to upload image: No URL returned')
       }
-      reader.readAsDataURL(file)
     }
   }
 
@@ -77,7 +79,7 @@ export function Feedback() {
         />
         <FormField
           control={form.control}
-          name="web_link"
+          name="url"
           render={({ field }) => (
             <FormItem>
               <div className="mb-1 text-base">Web Link</div>

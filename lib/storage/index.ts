@@ -1,5 +1,5 @@
 import { storage } from 'wxt/storage'
-import { LatexSymbol } from '../latex'
+import { defaultLatexSymbol } from '../latex'
 import type { Prefer } from './types'
 
 export type { Prefer }
@@ -8,7 +8,7 @@ const PREFER = 'sync:preference'
 
 export async function getPreference() {
   const prefer = await storage.getItem<Prefer>(PREFER)
-  const { show_toast = true, format_signs = LatexSymbol.Inline } = prefer || {}
+  const { show_toast = true, format_signs = defaultLatexSymbol } = prefer || {}
   return { show_toast, format_signs }
 }
 

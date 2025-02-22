@@ -5,7 +5,7 @@ import { defineConfig } from 'wxt'
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   manifest: {
-    permissions: ["scripting", "storage", "runtime"],
+    permissions: ["scripting", "storage"],
     name: "LaTeX Copy",
     version: "0.2.6",
     description: "Make copying LaTeX effortless and efficient!",

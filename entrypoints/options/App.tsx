@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div className="flex h-screen justify-center">
-      <div className="min-w-[700px] max-w-[1200px]">
+      <div>
         <Tabs
           defaultValue={curTab}
           orientation="vertical"
@@ -42,7 +42,7 @@ function App() {
               ))}
             </TabsList>
           </div>
-          <div className="flex-auto pl-4">
+          <div className="pl-4 w-[700px]">
             {siderMenuList.map((item) => (
               <TabsContent className="flex-1 p-6" key={item.value} value={item.value}>
                 {contentMap[item.value]}

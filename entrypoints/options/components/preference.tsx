@@ -45,7 +45,7 @@ const symbolList: SymbolItem[] = [
 const FormSchema = z.object({
   format_signs: z
     .enum(Object.values(LatexSymbol) as [string, ...string[]])
-    .default(LatexSymbol.Inline),
+    .default(defaultLatexSymbol),
   show_toast: z.boolean().default(true),
 })
 
@@ -131,7 +131,7 @@ export function Preference() {
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}

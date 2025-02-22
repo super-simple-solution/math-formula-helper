@@ -25,3 +25,6 @@ web-ext.config.ts
 *.sln
 *.sw?
 dist
+
+.env
+.env.local

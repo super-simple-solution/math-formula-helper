@@ -1,7 +1,15 @@
 import * as z from 'zod'
+
+export type Feedback = {
+  problem: string
+  email: string
+  url: string
+  image_urls: string[]
+}
+
 export const FormSchema = z.object({
   problem: z.string().min(1, { message: 'Problem is required.' }),
-  web_link: z.string().url({ message: 'Please enter a valid web link.' }),
+  url: z.string().url({ message: 'Please enter a valid web link.' }),
   email: z
     .string()
     .email({
