@@ -67,18 +67,21 @@ export function Preference() {
                       {symbolList.map((item) => (
                         <div
                           key={item.symbol}
-                          className="flex w-full items-center justify-between gap-2"
+                          className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-sm px-2 py-2 hover:bg-muted"
                         >
-                          <div>
+                          <div className="flex items-center">
                             <RadioGroupItem {...field} value={item.symbol} id={item.symbol} />
-                            <Label className="ml-4 cursor-pointer" htmlFor={item.symbol}>
-                              {item.title}
+                            <Label
+                              className="ml-4 flex flex-1 cursor-pointer flex-row"
+                              htmlFor={item.symbol}
+                            >
+                              <div className="w-48">{item.title}</div>
+                              <div className="flex gap-2">
+                                <div>{latexDemo}</div>
+                                <div>=&gt;</div>
+                                <div>{parserMap[item.symbol](latexDemo)}</div>
+                              </div>
                             </Label>
-                          </div>
-                          <div className="flex w-[150px] gap-2">
-                            <div>{latexDemo}</div>
-                            <div>=&gt;</div>
-                            <div>{parserMap[item.symbol](latexDemo)}</div>
                           </div>
                         </div>
                       ))}

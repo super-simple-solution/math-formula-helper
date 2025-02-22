@@ -29,7 +29,7 @@ export const symbolList: SymbolItem[] = [
 
 export const FormSchema = z.object({
   format_signs: z
-    .enum(Object.values(LatexSymbol) as [string, ...string[]])
+    .enum(Object.values(LatexSymbol) as [LatexSymbol, ...LatexSymbol[]])
     .default(defaultLatexSymbol),
   show_toast: z.boolean().default(true),
 })
