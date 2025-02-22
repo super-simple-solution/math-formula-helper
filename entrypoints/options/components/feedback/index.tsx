@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 import { FormSchema } from './const'
-import { feedbackApi, formInit, sendTelegramMessage, uploadImage } from './util'
+import { feedbackApi, formInit, uploadImage } from './util'
 
 export function Feedback() {
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -27,7 +27,6 @@ export function Feedback() {
     }
     data.image_urls = imageUrls
     await feedbackApi(data)
-    await sendTelegramMessage('littlexuexue', 'xxxx')
     toast({
       text: 'Thank you! Your feedback has been received and is greatly appreciated! 🌟',
     })
