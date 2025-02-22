@@ -12,7 +12,7 @@ export const FormSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid web link.' }),
   email: z
     .string()
-    .email({
+    .refine((val) => val === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
       message: 'Please enter a valid email address.',
     })
     .optional(),
