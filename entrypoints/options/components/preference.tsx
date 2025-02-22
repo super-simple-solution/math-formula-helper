@@ -93,7 +93,7 @@ export function Preference() {
                               className="w-full flex items-center justify-between gap-2 hover:bg-slate-100 px-10 py-3 cursor-pointer"
                               onClick={() => (field.value = item.symbol)}
                             >
-                              <div>
+                              <div className="flex items-center">
                                 <RadioGroupItem value={item.symbol} id={item.symbol} />
                                 <Label className="ml-4 cursor-pointer" htmlFor={item.symbol}>
                                   {item.title}
