@@ -22,10 +22,10 @@ function App() {
         <Tabs
           defaultValue={curTab}
           orientation="vertical"
-          className="flex"
+          className="flex h-auto"
           onValueChange={(val: string) => setCurTab(val as TabValue)}
         >
-          <div className="h-screen min-w-[240px] bg-[#f5f5f5] px-4">
+          <div className="h-screen min-w-[240px] px-4">
             <div className="flex items-center pt-20">
               <img src={logo} alt="logo" className="w-10" />
               <div className="ml-4 font-bold text-xl">Latex Copy</div>
@@ -33,16 +33,17 @@ function App() {
             <TabsList className="mt-4 flex flex-col justify-start">
               {siderMenuList.map((item) => (
                 <TabsTrigger
-                  className={`!shadow-none w-full justify-start py-3 ${item.value === curTab ? '!bg-blue-100' : ''}`}
+                  className={`!shadow-none w-full justify-start py-3 ${item.value === curTab ? '!bg-green-500' : ''}`}
                   key={item.value}
                   value={item.value}
                 >
+                  <span className="mr-2">{item.icon}</span>
                   {item.label}
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
-          <div className="pl-4 w-[700px]">
+          <div className="w-[700px] pl-4">
             {siderMenuList.map((item) => (
               <TabsContent className="flex-1 p-6" key={item.value} value={item.value}>
                 {contentMap[item.value]}
