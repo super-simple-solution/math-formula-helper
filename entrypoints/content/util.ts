@@ -1,6 +1,6 @@
 import { toast } from '@/lib'
 import { latexFormat } from '@/lib/latex'
-import { type Prefer, getPreference, watchPreference } from '@/lib/storage'
+import { LatexQueue, type Prefer, getPreference, watchPreference } from '@/lib/storage'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import { MathMLToLaTeX } from 'mathml-to-latex'
 
@@ -50,10 +50,15 @@ export async function formatCopiedText() {
 }
 
 export async function copyLatex(latexContent: string, options = { text: 'Copied' }) {
-  await clipboard.writeText(latexFormat(latexContent, preferData.format_signs))
+  const content = latexFormat(latexContent, preferData.format_signs)
+  await clipboard.writeText(content)
   if (preferData.show_toast) {
     toast(options)
   }
+  LatexQueue.enqueue({
+    url: location.href,
+    content
+  })
 }
 
 export async function copyLatexAsImage(
