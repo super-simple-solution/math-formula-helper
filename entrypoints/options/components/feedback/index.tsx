@@ -57,94 +57,103 @@ export function Feedback() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
-        <FormField
-          control={form.control}
-          name="problem"
-          render={({ field }) => (
-            <FormItem>
-              <div className="mb-1 text-base">Problem</div>
-              <FormControl>
-                <Textarea
-                  placeholder="Please describe the problem you encountered (required)"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="url"
-          render={({ field }) => (
-            <FormItem>
-              <div className="mb-1 text-base">Web Link</div>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Please enter the web page link for the problem"
-                  className="resize-none"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <div className="mb-1 text-base">Email</div>
-              <FormControl>
-                <Input {...field} placeholder="Please input your Email" className="resize-none" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="image_urls"
-          render={({ field }) => (
-            <FormItem>
-              <div className="mb-1 text-base">Image</div>
-              <div className="flex flex-wrap gap-2">
-                <div
-                  onClick={triggerFileInput}
-                  className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-md border bg-gray-100"
-                >
-                  <div className="font-thin text-3xl">+</div>
-                  <Input
-                    {...field}
-                    id="picture"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                </div>
-                {imageUrls.map((image, index) => (
-                  <div key={index} className="relative h-20 w-20 rounded-md">
-                    <img src={image} alt="Preview" className="h-20 w-20 rounded-md" />
+    <div>
+      <h3 className="mb-4 font-extrabold text-2xl">Feedback</h3>
+      <div className="shadow-md p-4 rounded-lg border">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
+            <FormField
+              control={form.control}
+              name="problem"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="mb-1 text-base">Problem</div>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Please describe the problem you encountered (required)"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="mb-1 text-base">Web Link</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Please enter the web page link for the problem"
+                      className="resize-none"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="mb-1 text-base">Email</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Please input your Email"
+                      className="resize-none"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image_urls"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="mb-1 text-base">Image</div>
+                  <div className="flex flex-wrap gap-2">
                     <div
-                      onClick={() => handleRemoveImage(index)}
-                      className="absolute top-[-6px] right-[-6px] flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-sm"
+                      onClick={triggerFileInput}
+                      className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-md border bg-gray-100"
                     >
-                      x
+                      <div className="font-thin text-3xl">+</div>
+                      <Input
+                        {...field}
+                        id="picture"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
                     </div>
+                    {imageUrls.map((image, index) => (
+                      <div key={index} className="relative h-20 w-20 rounded-md">
+                        <img src={image} alt="Preview" className="h-20 w-20 rounded-md" />
+                        <div
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-[-6px] right-[-6px] flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-sm"
+                        >
+                          x
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Save</Button>
-      </form>
-    </Form>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit">Save</Button>
+          </form>
+        </Form>
+      </div>
+    </div>
   )
 }

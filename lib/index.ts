@@ -2,7 +2,7 @@ import Toastify from 'toastify-js'
 import 'toastify-js/src/toastify.css'
 
 const toastConfig = {
-  duration: 3000,
+  duration: 13000,
   position: 'right',
   style: {
     background: 'linear-gradient(to right, #22c55e, #96c93d)',
