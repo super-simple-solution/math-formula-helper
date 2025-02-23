@@ -25,14 +25,14 @@ const MAX_LENGTH = 100
 export const LatexQueue = {
   async enqueue(item: LatexHistory): Promise<void> {
     const current = await this.getQueue()
-    await storage.setItem<LatexHistory[]>(LATEX_HISTORY, [...current, item].slice(-MAX_LENGTH));
+    await storage.setItem<LatexHistory[]>(LATEX_HISTORY, [...current, item].slice(-MAX_LENGTH))
   },
 
   async getQueue(): Promise<LatexHistory[]> {
-    return (await storage.getItem<LatexHistory[]>(LATEX_HISTORY)) || [];
+    return (await storage.getItem<LatexHistory[]>(LATEX_HISTORY)) || []
   },
 
   async clear(): Promise<void> {
-    await storage.setItem(LATEX_HISTORY, []);
-  }
-};
+    await storage.setItem(LATEX_HISTORY, [])
+  },
+}

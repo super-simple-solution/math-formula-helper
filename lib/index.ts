@@ -2,8 +2,9 @@ import Toastify from 'toastify-js'
 import 'toastify-js/src/toastify.css'
 
 const toastConfig = {
-  duration: 13000,
+  duration: 2000,
   position: 'right',
+  close: true,
   style: {
     background: 'linear-gradient(to right, #22c55e, #96c93d)',
   },
@@ -12,9 +13,9 @@ const toastConfig = {
 export function toast({ text }: { text: string }) {
   if (!text) return
   Toastify({
-       ...toastConfig,
-       text,
-     }).showToast()
+    ...toastConfig,
+    text,
+  }).showToast()
 }
 
 export function getEle(el: string, context: HTMLElement) {
