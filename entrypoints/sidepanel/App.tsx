@@ -11,12 +11,13 @@ import {
 } from '@/components/ui/form'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from '@/lib'
-import { type LatexHistory, LatexQueue } from '@/lib/storage'
+import { LatexQueue } from '@/lib/storage'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FileStack, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import type { Option } from './const'
 
 const FormSchema = z.object({
   items: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -24,27 +25,37 @@ const FormSchema = z.object({
   }),
 })
 
+function getContent(data: z.infer<typeof FormSchema>) {
+  return data.items.map((item) => item.replace(/^\d+\_/, ''))
+}
+
 function SiderPanelApp() {
-  const [historyList, setHistoryList] = useState<LatexHistory[]>([])
+  const [historyList, setHistoryList] = useState<Option[]>([])
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       items: [],
     },
-    values: { items: historyList.map(({ content }) => content) },
   })
 
   useEffect(() => {
     LatexQueue.getQueue().then((res) => {
-      setHistoryList(res)
+      const optionList: Option[] = res.map((item, index) => ({
+        id: `${index}_${item.content}`,
+        value: item.content,
+      }))
+      setHistoryList(optionList)
     })
   })
 
-  const copySelected = () => {}
+  const copySelected = () => {
+    const data = form.getValues()
+    console.log(getContent(data), 'values')
+  }
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(data, 'data')
+    console.log(getContent(data), 'data')
     toast({
       text: 'You submitted the following values:',
     })
@@ -93,32 +104,32 @@ function SiderPanelApp() {
                     Select the items you want to display in the sidebar.
                   </FormDescription>
                 </div>
-                {historyList.map((item, index) => (
+                {historyList.map((item) => (
                   <FormField
-                    key={`${item.content}_${index}`}
+                    key={item.id}
                     control={form.control}
                     name="items"
                     render={({ field }) => {
                       return (
                         <FormItem
-                          key={`${item.content}_${index}`}
-                          className="flex flex-row items-start space-x-3 space-y-0"
+                          key={item.id}
+                          className="flex cursor-pointer flex-row items-center space-x-3 space-y-0 hover:bg-muted"
                         >
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(`${item.content}_${index}`)}
+                              checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked
-                                  ? field.onChange([...field.value, `${item.content}_${index}`])
+                                  ? field.onChange([...field.value, item.id])
                                   : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== `${item.content}_${index}`,
-                                      ),
+                                      field.value?.filter((value) => value !== item.id),
                                     )
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal text-sm">{item.content}</FormLabel>
+                          <FormLabel htmlFor={item.id} className="font-normal text-lg">
+                            {item.value}
+                          </FormLabel>
                         </FormItem>
                       )
                     }}
@@ -132,7 +143,7 @@ function SiderPanelApp() {
         </form>
       </Form>
 
-      {historyList?.map((item, index) => (
+      {/* {historyList?.map((item, index) => (
         <div
           className="flex cursor-pointer items-center space-x-2 p-2 font-medium hover:bg-muted"
           key={`${item.content}_${index}`}
@@ -145,7 +156,7 @@ function SiderPanelApp() {
             {item.content}
           </label>
         </div>
-      ))}
+      ))} */}
     </div>
   )
 }

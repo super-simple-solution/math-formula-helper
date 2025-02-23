@@ -1,5 +1,6 @@
 import './style.css'
 import hotkeys from 'hotkeys-js'
+import { browser } from 'wxt/browser'
 import { ImageAltRule, rules } from './const'
 import { createOpacityImage, formatCopiedText, initClipboard } from './util'
 
@@ -25,7 +26,7 @@ function init(resetCount) {
   inited = true
   initClipboard()
   eventInit()
-  chrome.runtime.sendMessage({
+  browser.runtime.sendMessage({
     greeting: 'insert-css',
     data: [...rule.selectorList, ...ImageAltRule.selectorList],
   })

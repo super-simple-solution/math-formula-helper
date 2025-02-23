@@ -1,5 +1,6 @@
 import { initEventHandler } from '@/lib/extension-action'
 import generateCSS from '@/lib/style'
+import { browser } from 'wxt/browser'
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id })
@@ -9,7 +10,7 @@ export default defineBackground(() => {
   }
 
   function insertCSS(data, __, tabId) {
-    chrome.scripting.insertCSS({
+    browser.scripting.insertCSS({
       css: generateCSS(data),
       target: { tabId },
     })
@@ -17,3 +18,7 @@ export default defineBackground(() => {
 
   initEventHandler(contentReq)
 })
+
+// browser.sidePanel
+//   .setPanelBehavior({ openPanelOnActionClick: true })
+//   .catch((error) => console.error(error))
