@@ -3,7 +3,11 @@ export type Option = {
   value: string
 }
 
-export function formInit() {
+type FormValue = {
+  items: string[]
+}
+
+export function formInit(): FormValue {
   return {
     items: [],
   }

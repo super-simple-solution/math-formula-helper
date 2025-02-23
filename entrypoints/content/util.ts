@@ -1,8 +1,9 @@
-import { toast } from '@/lib'
+import { toast, uuid } from '@/lib'
 import { latexFormat } from '@/lib/latex'
 import { LatexQueue, type Prefer, getPreference, watchPreference } from '@/lib/storage'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import { MathMLToLaTeX } from 'mathml-to-latex'
+import type { Unwatch } from 'wxt/storage'
 
 let preferData: Prefer
 
@@ -10,13 +11,14 @@ function initPrefer() {
   getPreference().then(setPrefer)
 }
 
-initPrefer()
-
 function setPrefer(prefer: Prefer) {
   preferData = prefer
 }
 
-watchPreference(setPrefer)
+export function watchPrefer(): Unwatch {
+  initPrefer()
+  return watchPreference(setPrefer)
+}
 
 let clipboard: Clipboard =
   navigator.clipboard ||
@@ -57,7 +59,8 @@ export async function copyLatex(latexContent: string, options = { text: 'Copied'
   }
   LatexQueue.enqueue({
     url: location.href,
-    content,
+    value: latexContent, // 存储不带格式的latex, 使用时再带格式
+    id: uuid(),
   })
 }
 

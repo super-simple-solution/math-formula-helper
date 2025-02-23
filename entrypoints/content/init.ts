@@ -1,7 +1,7 @@
 import './style.css'
+import { sendBrowserMessage } from '@/lib/extension-action'
 import hotkeys from 'hotkeys-js'
-import { browser } from 'wxt/browser'
-import { ImageAltRule, rules } from './const'
+import { ImageAltRule, type Rule, rules } from './const'
 import { createOpacityImage, formatCopiedText, initClipboard } from './util'
 
 export function latexInit() {
@@ -11,8 +11,8 @@ export function latexInit() {
 let count = 0
 let inited = false
 let canCopyAll = false
-let rule
-function init(resetCount) {
+let rule: Rule | undefined
+function init(resetCount: boolean) {
   if (inited) return
   if (resetCount) count = 0
   if (document.visibilityState === 'hidden') return
@@ -26,7 +26,7 @@ function init(resetCount) {
   inited = true
   initClipboard()
   eventInit()
-  browser.runtime.sendMessage({
+  sendBrowserMessage({
     greeting: 'insert-css',
     data: [...rule.selectorList, ...ImageAltRule.selectorList],
   })
@@ -36,11 +36,19 @@ function init(resetCount) {
 
   document.body.addEventListener('click', (e) => {
     const target = e.target
-    const finalTarget = target.closest(selector)
+    const finalTarget = (target as HTMLElement).closest(selector) as HTMLElement
     if (!finalTarget) return
     curRule.parse(finalTarget).then((res) => {
-      const content = curRule.pre(res)
-      curRule.post(finalTarget, content)
+      if (res) {
+        let content: string | Blob
+        if (typeof res === 'string') {
+          content = curRule.pre(res) as string
+          curRule.post(finalTarget, content)
+        } else if (res instanceof Blob) {
+          content = curRule.pre(res) as Blob
+          curRule.post(finalTarget, content)
+        }
+      }
     })
   })
 }
@@ -65,10 +73,11 @@ function eventInit() {
 
   document.addEventListener('scroll', () => {
     if (!canCopyAll) return
-    const ruleSelector = rule.selectorList.join()
+    const ruleSelector = rule?.selectorList.join()
+    if (!ruleSelector?.length) return
     const elList = Array.from(document.querySelectorAll(ruleSelector)).filter(
       (item) => !item.getAttribute('data-uuid'),
-    )
+    ) as HTMLElement[]
     if (!elList.length) return
     fullPageCopy(elList)
   })
@@ -79,14 +88,17 @@ function eventInit() {
   })
 }
 
-async function fullPageCopy(targetList = []) {
+async function fullPageCopy(targetList: HTMLElement[] = []) {
   canCopyAll = true
-  const ruleSelector = rule.selectorList.join()
+  if (!rule) return
+  const ruleSelector = rule?.selectorList.join()
+  if (!ruleSelector?.length) return
   const elList = targetList.length ? targetList : document.querySelectorAll(ruleSelector)
-  for (const el of elList) {
+  for (const el of elList as HTMLElement[]) {
     if (el.tagName === 'IMG' || !el.offsetHeight) continue
     const uuid = crypto.randomUUID()
-    const parent = el.parentNode
+    const parent = el.parentNode as HTMLElement
+    if (!parent) return
     const parentPosition = window.getComputedStyle(parent).position
     if (parentPosition === 'static') parent.style.position = 'relative'
     const content = await rule.parse(el)
@@ -99,11 +111,12 @@ async function fullPageCopy(targetList = []) {
       alt: content,
       id: uuid,
     })
+    if (!img) return
     const imgContainer = document.createElement('span')
     imgContainer.className = 'sss-img-latex'
     imgContainer.style.left = `${el.offsetLeft}px`
     imgContainer.style.top = `${el.offsetTop}px`
     imgContainer.appendChild(img)
-    el.parentNode.insertBefore(imgContainer, el)
+    el.parentNode?.insertBefore(imgContainer, el)
   }
 }

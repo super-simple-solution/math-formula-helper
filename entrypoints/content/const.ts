@@ -8,7 +8,15 @@ export const ImageAltRule = {
   post,
 }
 
-export const rules = {
+export type Rule = {
+  testUrl: string[]
+  selectorList: string[]
+  parse: (el: HTMLElement) => Promise<string | Blob | null>
+  pre: <T extends string | Blob>(content: T) => T
+  post: <T extends string | Blob>(el: HTMLElement, content: T) => Promise<void>
+}
+
+export const rules: Record<string, Rule> = {
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12', 'https://arxiv.org/html/2412.11563v1'],
     selectorList: ['.ltx_equation .ltx_Math', 'math.ltx_math_unparsed', 'math.ltx_Math'],
@@ -113,22 +121,8 @@ export const rules = {
         })
       }
     },
-    pre: (content: string | Blob) => {
-      if (!content) return
-      if (content instanceof Blob) return content
-      return latexRefine(content)
-    },
-    post: async (el: HTMLElement, content: string | Blob) => {
-      if (!content) return
-      let copyPromise: Promise<void>
-      if (content instanceof Blob) {
-        copyPromise = copyLatexAsImage(content)
-      } else {
-        copyPromise = copyLatex(content)
-      }
-      await copyPromise
-      addCopiedStyle(el)
-    },
+    pre,
+    post,
   },
   math_img: {
     testUrl: [
@@ -151,7 +145,7 @@ export const rules = {
         ) as string
       } else {
         const imgEl = el.querySelector('img') || el.closest('img')
-        if (!imgEl || !imgEl.alt) return
+        if (!imgEl || !imgEl.alt) return ''
         latexContent = imgEl.alt
       }
       return latexContent
@@ -162,27 +156,42 @@ export const rules = {
   wolfram_math_img: {
     testUrl: ['https://mathworld.wolfram.com/HilbertSpace.html'],
     selectorList: ['img.numberedequation'],
-    parse: async (el: HTMLImageElement) => {
-      if (!el.alt) return
-      // el.alt is TexForm, not latex
-      return el.alt
+    parse: async (el: HTMLElement) => {
+      const element = el as HTMLImageElement
+      if (!element.alt) return ''
+      // element.alt is TexForm, not latex
+      return element.alt
     },
-    pre: (content: string) => content.trim(),
-    post: async (el: HTMLElement, content: string) => {
-      copyLatex(content, {
-        text: 'Copied as TexForm(not LaTeX)',
-      })
+    pre,
+    post: async <T extends string | Blob>(el: HTMLElement, content: T) => {
+      if (typeof content === 'string') {
+        copyLatex(content, {
+          text: 'Copied as TexForm(not LaTeX)',
+        })
+      }
       addCopiedStyle(el)
     },
   },
 }
 
-function pre(content: string) {
-  return latexRefine(content)
+function pre<T extends string | Blob>(content: T): T {
+  if (typeof content === 'string') {
+    return latexRefine(content) as T // 处理 string 类型
+    // biome-ignore lint/style/noUselessElse: <explanation>
+  } else {
+    return content // 直接返回 Blob 类型
+  }
 }
 
-async function post(el: HTMLElement, content: string) {
-  await copyLatex(content)
+async function post<T extends string | Blob>(el: HTMLElement, content: T) {
+  if (!content) return
+  let copyPromise: Promise<void>
+  if (content instanceof Blob) {
+    copyPromise = copyLatexAsImage(content)
+  } else {
+    copyPromise = copyLatex(content)
+  }
+  await copyPromise
   addCopiedStyle(el)
 }
 

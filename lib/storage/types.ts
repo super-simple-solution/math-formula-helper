@@ -7,5 +7,6 @@ export type Prefer = {
 
 export type LatexHistory = {
   url: string,
-  content: string
+  id: string
+  value: string
 } 

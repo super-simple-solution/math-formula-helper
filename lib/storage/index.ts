@@ -1,4 +1,4 @@
-import { storage } from 'wxt/storage'
+import { type Unwatch, storage } from 'wxt/storage'
 import { defaultLatexSymbol } from '../latex'
 import type { LatexHistory, Prefer } from './types'
 export type { Prefer, LatexHistory }
@@ -16,8 +16,8 @@ export async function setPreference(data: Prefer) {
   await storage.setItem<Prefer>(PREFER, data)
 }
 
-export async function watchPreference(cb: (newPrefer: Prefer) => void) {
-  storage.watch<Prefer>(PREFER, (newPrefer) => newPrefer && cb(newPrefer))
+export function watchPreference(cb: (newValue: Prefer) => void): Unwatch  {
+  return storage.watch<Prefer>(PREFER, (newValue) => newValue && cb(newValue))
 }
 
 const MAX_LENGTH = 100
@@ -32,7 +32,16 @@ export const LatexQueue = {
     return (await storage.getItem<LatexHistory[]>(LATEX_HISTORY)) || []
   },
 
+  async remove(idList: string[]) {
+    const current = await this.getQueue()
+    await storage.setItem<LatexHistory[]>(LATEX_HISTORY, current.filter(item => !idList.includes(item.id)))
+  },
+
   async clear(): Promise<void> {
     await storage.setItem(LATEX_HISTORY, [])
   },
+
+  watch(cb: (newValue: LatexHistory[]) => void): Unwatch {
+    return storage.watch<LatexHistory[]>(LATEX_HISTORY, (newValue) => newValue && cb(newValue))
+  }
 }
