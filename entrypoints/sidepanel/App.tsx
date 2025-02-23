@@ -118,7 +118,7 @@ function SiderPanelApp() {
                   <FormItem>
                     <div className="px-4">
                       <div className="my-4 rounded-lg border border-green-500 bg-green-50 p-2 text-green-500">
-                        Choose an option below to copy
+                        💡 Choose an option below to copy
                       </div>
                     </div>
                     {historyList.map((item) => (
