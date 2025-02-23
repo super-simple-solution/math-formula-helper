@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import SiderPanelApp from './App.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  // <React.StrictMode>
+  <React.StrictMode>
   <SiderPanelApp />,
-  // </React.StrictMode>,
+  </React.StrictMode>,
 )

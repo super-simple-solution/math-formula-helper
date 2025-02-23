@@ -11,7 +11,6 @@ import { Copy, FileStack, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { Tabs } from 'wxt/browser'
-import { copyLatex } from '../content/util'
 import { formInit } from './const'
 
 type HistoryMap = Record<string, LatexHistory>
@@ -100,7 +99,7 @@ function SiderPanelApp() {
       return
     }
     const content = getContent(items)
-    await copyLatex(content)
+    await navigator.clipboard.writeText(content)
     toast({
       text: 'Copied Successful. ✨',
     })
