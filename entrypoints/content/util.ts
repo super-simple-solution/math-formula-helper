@@ -57,7 +57,7 @@ export async function copyLatex(latexContent: string, options = { text: 'Copied'
   }
   LatexQueue.enqueue({
     url: location.href,
-    content
+    content,
   })
 }
 

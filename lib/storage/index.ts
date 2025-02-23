@@ -1,8 +1,7 @@
-import TinyQueue from 'tinyqueue'
 import { storage } from 'wxt/storage'
 import { defaultLatexSymbol } from '../latex'
 import type { LatexHistory, Prefer } from './types'
-export type { Prefer }
+export type { Prefer, LatexHistory }
 
 const PREFER = 'sync:preference'
 const LATEX_HISTORY = 'local:latex_history'
