@@ -109,14 +109,14 @@ function SiderPanelApp() {
 
   const copySelected = async () => {
     const { idList } = form.getValues()
-    console.log(idList, 'copySelected data')
-    if (!idList.length) {
+    const ids = idList.filter(Boolean)
+    if (!ids.length) {
       toast({
         text: 'You have to select at least one item.',
       })
       return
     }
-    copyLatex(idList)
+    copyLatex(ids)
   }
 
   const copyLatex = async (idList: string[]) => {
@@ -141,7 +141,7 @@ function SiderPanelApp() {
     console.log(idList, 'remove data')
     removeHistory(idList)
     toast({
-      text: 'Clear successfully!',
+      text: 'Deleted successfully.',
     })
   }
 
@@ -168,7 +168,7 @@ function SiderPanelApp() {
                     className="border-red-500 text-red-500 hover:bg-white hover:text-red-600"
                     onClick={removeSelectedHistory}
                   >
-                    Clear Selected
+                    Delete Selected
                   </Button>
                 </div>
               </PopoverContent>
@@ -198,7 +198,7 @@ function SiderPanelApp() {
                   <FormItem>
                     <div className="px-4">
                       <div className="my-4 rounded-lg border border-green-500 bg-green-50 p-2 text-green-500">
-                        💡 Choose an option below to copy
+                        💡 Select some from the list below to copy
                       </div>
                     </div>
                     {list.map((item) => (
@@ -228,11 +228,6 @@ function SiderPanelApp() {
                                   </FormLabel>
                                 </div>
                                 <div className="flex flex-end items-center gap-2">
-                                  <Trash2
-                                    onClick={() => removeHistory([item.id])}
-                                    className="cursor-pointer text-red-500"
-                                    size="16"
-                                  />
                                   <Copy
                                     onClick={() => copyLatex([item.id])}
                                     className="cursor-pointer text-green-500"

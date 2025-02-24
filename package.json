@@ -1,5 +1,5 @@
 {
-  "name": "wxt-vue-starter",
+  "name": "latex-copy",
   "description": "manifest.json description",
   "private": true,
   "version": "0.0.0",
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/chrome": "^0.0.280",
+    "@types/chrome": "0.0.306",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
