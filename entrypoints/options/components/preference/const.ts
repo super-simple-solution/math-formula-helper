@@ -32,4 +32,5 @@ export const FormSchema = z.object({
     .enum(Object.values(LatexSymbol) as [LatexSymbol, ...LatexSymbol[]])
     .default(defaultLatexSymbol),
   show_toast: z.boolean().default(true),
+  trim_punctuation: z.boolean().default(true),
 })

@@ -52,7 +52,7 @@ export async function formatCopiedText() {
 }
 
 export async function copyLatex(latexContent: string, options = { text: 'Copied' }) {
-  const content = latexFormat(latexContent, preferData.format_signs)
+  const content = latexFormat(latexContent, preferData)
   await clipboard.writeText(content)
   if (preferData.show_toast) {
     toast(options)
@@ -150,6 +150,6 @@ export function createOpacityImage(options: {
   const img = new Image()
   img.src = imageDataURL
   img.id = id
-  img.alt = latexFormat(alt, preferData.format_signs)
+  img.alt = latexFormat(alt, preferData)
   return img
 }

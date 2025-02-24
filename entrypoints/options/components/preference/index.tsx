@@ -107,6 +107,24 @@ export function Preference() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="trim_punctuation"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Trim Punctuation</FormLabel>
+                    <FormDescription>
+                      Excising extraneous punctuation marks that may reside at the beginning or the
+                      end.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
         </div>
         <Button type="submit">Save</Button>

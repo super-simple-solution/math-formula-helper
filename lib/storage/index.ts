@@ -8,8 +8,8 @@ const LATEX_HISTORY = 'local:latex_history'
 
 export async function getPreference() {
   const prefer = await storage.getItem<Prefer>(PREFER)
-  const { show_toast = true, format_signs = defaultLatexSymbol } = prefer || {}
-  return { show_toast, format_signs }
+  const { show_toast = true, format_signs = defaultLatexSymbol, trim_punctuation = true } = prefer || {}
+  return { show_toast, format_signs,  trim_punctuation}
 }
 
 export async function setPreference(data: Prefer) {
@@ -20,7 +20,7 @@ export function watchPreference(cb: (newValue: Prefer) => void): Unwatch  {
   return storage.watch<Prefer>(PREFER, (newValue) => newValue && cb(newValue))
 }
 
-const MAX_LENGTH = 100
+const MAX_LENGTH = 200
 
 export const LatexQueue = {
   async enqueue(item: LatexHistory): Promise<void> {

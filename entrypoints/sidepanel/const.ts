@@ -4,11 +4,11 @@ export type Option = {
 }
 
 type FormValue = {
-  items: string[]
+  idList: string[]
 }
 
 export function formInit(): FormValue {
   return {
-    items: [],
+    idList: [],
   }
 }

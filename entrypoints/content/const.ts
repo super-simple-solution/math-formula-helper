@@ -211,10 +211,14 @@ function katexContentExtra(content: string) {
 }
 
 function latexRefine(content: string) {
-  const trimmedContent = content.trim()
+  console.log(content, 'content')
+  const trimmedContent = content
+    .trim()
+    .replace(/&nbsp;/g, '\\enspace ')
+    .replace(/\\&\\text{nbsp};/g, '\\enspace ')
   if (!trimmedContent.length) return ''
   if (trimmedContent.includes('\\\\') && !trimmedContent.startsWith('\\begin')) {
     return `\\begin{array}{c} ${trimmedContent} \\end{array}`
   }
-  return trimmedContent.replace(/&nbsp;/g, '\\enspace ')
+  return trimmedContent
 }

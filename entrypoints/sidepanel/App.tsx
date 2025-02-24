@@ -1,4 +1,3 @@
-import EmptyImg from '@/assets/images/svg/empty.svg'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
@@ -6,19 +5,37 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from '@/lib'
 import { sendBrowserMessage } from '@/lib/extension-action'
-import { type LatexHistory, LatexQueue } from '@/lib/storage'
+import { latexFormat } from '@/lib/latex'
+import {
+  type LatexHistory,
+  LatexQueue,
+  type Prefer,
+  getPreference,
+  watchPreference,
+} from '@/lib/storage'
 import { Copy, FileStack, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { Tabs } from 'wxt/browser'
+import { Placeholder } from './components/placeholder'
 import { formInit } from './const'
 
 type HistoryMap = Record<string, LatexHistory>
 
+async function copy(content: string) {
+  await navigator.clipboard.writeText(content)
+  toast({
+    text: 'Copied Successful. ✨',
+  })
+}
+// TODO: when active url update, get url
 function SiderPanelApp() {
+  const [list, setList] = useState<LatexHistory[]>([])
+  const [map, setMap] = useState<HistoryMap>()
   const [historyList, setHistoryList] = useState<LatexHistory[]>([])
-  const [historyMap, setHistoryMap] = useState<HistoryMap>()
   const [tabUrl, setTabUrl] = useState<string>()
+  const [prefer, setPrefer] = useState<Prefer>()
+
   const form = useForm({
     defaultValues: formInit(),
   })
@@ -26,16 +43,20 @@ function SiderPanelApp() {
   const getList = (list: LatexHistory[]) => {
     const promise = list.length ? Promise.resolve(list) : LatexQueue.getQueue()
     promise.then((res) => {
-      setHistoryList(res.filter((item) => item.url === tabUrl))
-      setHistoryMap
+      setHistoryList(res)
     })
   }
 
   const getContent = (idList: string[]) => {
-    if (!historyMap) return ''
-    // TODO: 用户当前选择的格式
-    // latexFormat(alt, preferData.format_signs)
-    return idList.map(id => historyMap[id] ? historyMap[id].value: '').join(',')
+    if (!map) return ''
+    const contentList = idList.map((id) => {
+      if (map[id] && prefer) {
+        map[id].value
+        return latexFormat(map[id].value, prefer)
+      }
+      return ''
+    })
+    return contentList.join(',')
   }
 
   const getTabUrl = () => {
@@ -62,65 +83,63 @@ function SiderPanelApp() {
   }
 
   useEffect(() => {
-    if (tabUrl) {
-      getList([])
-    }
-  }, [tabUrl])
+    setList(historyList.filter((item) => item.url === tabUrl))
+  }, [tabUrl, historyList])
 
   useEffect(() => {
-    const newItemMap = historyList.reduce((map, item) => {
+    const newItemMap = list.reduce((map, item) => {
       map[item.id] = item
       return map
     }, {} as HistoryMap)
-    setHistoryMap(newItemMap)
-  }, [historyList])
+    setMap(newItemMap)
+  }, [list])
 
   useEffect(() => {
-    getTabUrl()
+    getTabUrl().then(() => getList([]))
+    getPreference().then(setPrefer)
     browser.tabs.onActivated.addListener(handleTabActivated)
-    const unwatch = LatexQueue.watch((newList) => {
-      // 刷新sidepanel页时，没有初始化tabUrl
-      // const promise = tabUrl ? Promise.resolve(true) : getTabUrl()
-      // promise.then(() => getList(newList))
-      getList(newList)
-    })
+    const unwatchLatex = LatexQueue.watch(getList)
+    const unwatchPrefer = watchPreference(setPrefer)
     return () => {
       chrome.tabs.onActivated.removeListener(handleTabActivated)
-      unwatch()
+      unwatchLatex()
+      unwatchPrefer()
     }
   }, [])
 
   const copySelected = async () => {
-    const { items } = form.getValues()
-    if (!items.length) {
+    const { idList } = form.getValues()
+    console.log(idList, 'copySelected data')
+    if (!idList.length) {
       toast({
         text: 'You have to select at least one item.',
       })
       return
     }
-    const content = getContent(items)
-    await navigator.clipboard.writeText(content)
-    toast({
-      text: 'Copied Successful. ✨',
-    })
+    copyLatex(idList)
+  }
+
+  const copyLatex = async (idList: string[]) => {
+    const content = getContent(idList)
+    await copy(content)
   }
 
   const clearAllHistory = async () => {
-    await LatexQueue.clear()
+    await removeHistory(list.map((item) => item.id))
     form.reset(formInit())
     toast({
-      text: 'All history has been cleared successfully!',
+      text: 'All the history on this page has been removed successfully.',
     })
   }
 
-  const removeHistory = (idList: string[]) => {
-    LatexQueue.remove(idList)
+  const removeHistory = async (idList: string[]) => {
+    await LatexQueue.remove(idList)
   }
 
   const removeSelectedHistory = () => {
-    const data = form.getValues()
-    // const filteredHistoryList = historyList.filter(item => !data.includes(item.value))
-    // setHistoryList()
+    const { idList } = form.getValues()
+    console.log(idList, 'remove data')
+    removeHistory(idList)
     toast({
       text: 'Clear successfully!',
     })
@@ -129,7 +148,7 @@ function SiderPanelApp() {
   return (
     <div>
       <div className="mt-4 ml-2 text-lg">Latex copying history</div>
-      {historyList.length ? (
+      {list.length ? (
         <div>
           <div className="flex justify-end gap-4 px-4">
             <Popover>
@@ -174,7 +193,7 @@ function SiderPanelApp() {
             <form className="space-y-8">
               <FormField
                 control={form.control}
-                name="items"
+                name="idList"
                 render={() => (
                   <FormItem>
                     <div className="px-4">
@@ -182,11 +201,11 @@ function SiderPanelApp() {
                         💡 Choose an option below to copy
                       </div>
                     </div>
-                    {historyList.map((item) => (
+                    {list.map((item) => (
                       <FormField
                         key={item.id}
                         control={form.control}
-                        name="items"
+                        name="idList"
                         render={({ field }) => {
                           return (
                             <FormItem key={item.id}>
@@ -215,7 +234,7 @@ function SiderPanelApp() {
                                     size="16"
                                   />
                                   <Copy
-                                    onClick={() => copyLatex(item.value)}
+                                    onClick={() => copyLatex([item.id])}
                                     className="cursor-pointer text-green-500"
                                     size="16"
                                   />
@@ -233,12 +252,7 @@ function SiderPanelApp() {
           </Form>
         </div>
       ) : (
-        <div className="mt-20 flex h-full flex-col items-center justify-center px-4">
-          <img src={EmptyImg} alt="" className="w-[100px]" />
-          <div className="mt-10 text-gray-500">
-            No history yet. Copy a LaTeX formula from any page to get started.
-          </div>
-        </div>
+        <Placeholder />
       )}
     </div>
   )
