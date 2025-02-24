@@ -23,61 +23,46 @@ export default defineBackground(() => {
     browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
       if (tabs.length > 0) {
         const tab = tabs[0]
-        console.log('Current tab:', tab)
+        console.log('get active Current tab:', tab.id)
         sendResponse(tab)
       }
     })
   }
 
   initEventHandler(contentReq)
-
-  function openPanel(tabId: number) {
-    chrome.sidePanel.open({
-      tabId,
-    })
-  }
-
-  function closePanel(tabId: number) {
+  const tabSet = new Set()
+  // 点击图标打开
+  chrome.action.onClicked.addListener((tab) => {
+    const tabId = tab.id as number
+    tabSet.add(tabId)
     chrome.sidePanel.setOptions({
       tabId,
-      enabled: false,
+      path: 'sidepanel.html',
+      enabled: true,
     })
-  }
-  chrome.sidePanel
-    .setPanelBehavior({ openPanelOnActionClick: true })
-    .catch((error) => console.error(error))
+    chrome.sidePanel.open({
+      tabId: tab.id as number,
+    })
+  })
 
-  const tabSidePanelStates: Record<number, boolean> = {}
-
-  chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  chrome.tabs.onActivated.addListener(async (activeInfo: { tabId: number }) => {
     const { tabId } = activeInfo
-    const sidePanelState = tabSidePanelStates[tabId] || false // 默认侧边面板关闭
-
-    if (sidePanelState) {
-      openPanel(tabId)
-    } else {
-      closePanel(tabId)
-    }
+    disablePanel(tabId)
   })
 
-  // 监听 Tab 关闭事件，关闭对应的侧边面板
-  chrome.tabs.onRemoved.addListener((tabId) => {
-    closePanel(tabId)
-    delete tabSidePanelStates[tabId]
+  chrome.tabs.onUpdated.addListener(async (tabId) => {
+    disablePanel(tabId)
   })
 
-  // 处理插件图标点击事件
-  chrome.action.onClicked.addListener((tab) => {
-    const currentState = tabSidePanelStates[tab.id as number] || false
-    toggleSidePanel(tab.id as number, !currentState)
-  })
-
-  function toggleSidePanel(tabId: number, open: boolean) {
-    tabSidePanelStates[tabId] = open
-    if (open) {
-      openPanel(tabId)
-    } else {
-      closePanel(tabId)
+  function disablePanel(tabId: number) {
+    if (!tabSet.has(tabId)) {
+      chrome.sidePanel.setOptions({
+        enabled: false,
+      })
     }
   }
+
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    tabSet.delete(tabId)
+  })
 })

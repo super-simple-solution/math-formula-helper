@@ -8,8 +8,8 @@ const LATEX_HISTORY = 'local:latex_history'
 
 export async function getPreference() {
   const prefer = await storage.getItem<Prefer>(PREFER)
-  const { show_toast = true, format_signs = defaultLatexSymbol, trim_punctuation = true } = prefer || {}
-  return { show_toast, format_signs,  trim_punctuation}
+  const { show_toast = true, format_signs = defaultLatexSymbol } = prefer || {}
+  return { show_toast, format_signs }
 }
 
 export async function setPreference(data: Prefer) {

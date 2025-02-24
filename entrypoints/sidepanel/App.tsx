@@ -209,8 +209,8 @@ function SiderPanelApp() {
                         render={({ field }) => {
                           return (
                             <FormItem key={item.id}>
-                              <div className="flex cursor-pointer flex-row items-center space-y-0 px-4 py-2 hover:bg-muted">
-                                <div className="flex-1">
+                              <div className="flex cursor-pointer flex-row items-center gap-2 space-y-0 px-4 py-2 hover:bg-muted">
+                                <div className="flex flex-1 items-center">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value.includes(item.id)}
@@ -223,7 +223,7 @@ function SiderPanelApp() {
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="cursor-pointer pl-3 font-normal">
+                                  <FormLabel className="cursor-pointer pl-3 font-normal leading-6">
                                     {item.value}
                                   </FormLabel>
                                 </div>
