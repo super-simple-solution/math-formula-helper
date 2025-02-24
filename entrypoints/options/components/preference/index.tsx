@@ -27,6 +27,7 @@ export function Preference() {
     defaultValues: {
       format_signs: defaultLatexSymbol,
       show_toast: true,
+      trim_punctuation: true,
     },
     values: prefer,
   })

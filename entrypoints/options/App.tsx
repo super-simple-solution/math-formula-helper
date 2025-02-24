@@ -30,7 +30,7 @@ function App() {
               <img src={logo} alt="logo" className="w-10" />
               <div className="ml-4 font-bold text-xl">Latex Copy</div>
             </div>
-            <TabsList className="mt-4 flex flex-col gap-1 justify-start">
+            <TabsList className="mt-4 flex flex-col justify-start gap-1">
               {siderMenuList.map((item) => (
                 <TabsTrigger
                   className={`!shadow-none w-full justify-start rounded-xl py-3 hover:bg-slate-100 ${item.value === curTab ? '!bg-green-50 !text-green-500' : ''}`}
@@ -43,7 +43,7 @@ function App() {
               ))}
             </TabsList>
           </div>
-          <div className="w-[700px] pl-4 border-l border-gray-200">
+          <div className="w-[700px] border-gray-200 border-l pl-4">
             {siderMenuList.map((item) => (
               <TabsContent className="flex-1 p-6" key={item.value} value={item.value}>
                 {contentMap[item.value]}

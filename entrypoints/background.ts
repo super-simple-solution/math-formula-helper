@@ -30,11 +30,10 @@ export default defineBackground(() => {
   }
 
   initEventHandler(contentReq)
+
   function openPanel(tabId: number) {
-    chrome.sidePanel.setOptions({
+    chrome.sidePanel.open({
       tabId,
-      enabled: true,
-      path: 'sidepanel.html',
     })
   }
 
