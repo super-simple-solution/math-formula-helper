@@ -32,7 +32,7 @@ export default defineBackground(() => {
   initEventHandler(contentReq)
   const tabSet = new Set()
   // 点击图标打开
-  chrome.action.onClicked.addListener((tab) => {
+  browser.action.onClicked.addListener((tab) => {
     const tabId = tab.id as number
     tabSet.add(tabId)
     chrome.sidePanel.setOptions({
@@ -45,12 +45,12 @@ export default defineBackground(() => {
     })
   })
 
-  chrome.tabs.onActivated.addListener(async (activeInfo: { tabId: number }) => {
+  browser.tabs.onActivated.addListener(async (activeInfo: { tabId: number }) => {
     const { tabId } = activeInfo
     disablePanel(tabId)
   })
 
-  chrome.tabs.onUpdated.addListener(async (tabId) => {
+  browser.tabs.onUpdated.addListener(async (tabId) => {
     disablePanel(tabId)
   })
 
@@ -62,7 +62,7 @@ export default defineBackground(() => {
     }
   }
 
-  chrome.tabs.onRemoved.addListener(async (tabId) => {
+  browser.tabs.onRemoved.addListener(async (tabId) => {
     tabSet.delete(tabId)
   })
 })

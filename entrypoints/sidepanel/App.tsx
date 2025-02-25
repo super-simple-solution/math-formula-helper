@@ -73,7 +73,7 @@ function SiderPanelApp() {
 
   const handleTabActivated = async (activeInfo: { tabId: number }) => {
     try {
-      const tab = await chrome.tabs.get(activeInfo.tabId)
+      const tab = await browser.tabs.get(activeInfo.tabId)
       if (tab?.url) {
         setTabUrl(tab.url)
       }
@@ -101,7 +101,7 @@ function SiderPanelApp() {
     const unwatchLatex = LatexQueue.watch(getList)
     const unwatchPrefer = watchPreference(setPrefer)
     return () => {
-      chrome.tabs.onActivated.removeListener(handleTabActivated)
+      browser.tabs.onActivated.removeListener(handleTabActivated)
       unwatchLatex()
       unwatchPrefer()
     }
