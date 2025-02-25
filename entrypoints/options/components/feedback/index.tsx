@@ -72,7 +72,7 @@ export function Feedback() {
               <img src={Email} alt="" className="w-10" />
             </a>
           </div>
-          <div className="mt-2 text-gray-400">Chat with us on Telegram or send us an Email</div>
+          <div className="mt-2 text-gray-500">Chat with us on Telegram or send us an Email</div>
         </div>
       </div>
       <div>
