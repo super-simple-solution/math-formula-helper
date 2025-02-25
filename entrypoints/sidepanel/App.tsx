@@ -13,12 +13,14 @@ import {
   getPreference,
   watchPreference,
 } from '@/lib/storage'
-import { Copy, FileStack, Trash2 } from 'lucide-react'
+import { Copy, FileStack, Info, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { BlockMath } from 'react-katex'
 import type { Tabs } from 'wxt/browser'
 import { Placeholder } from './components/placeholder'
 import { formInit } from './const'
+import 'katex/dist/katex.min.css'
 
 type HistoryMap = Record<string, LatexHistory>
 
@@ -220,7 +222,7 @@ function SiderPanelApp() {
                           return (
                             <FormItem key={item.id} className="w-full">
                               <div className="flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2 hover:bg-muted">
-                                <div className="flex min-w-[288px] items-center">
+                                <div className="flex min-w-[250px] items-center">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value.includes(item.id)}
@@ -233,16 +235,21 @@ function SiderPanelApp() {
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="cursor-pointer pl-3 font-normal text-sm leading-6">
-                                    {item.value}
+                                  <FormLabel className="cursor-pointer overflow-hidden pl-3 font-normal text-xs leading-6">
+                                    <BlockMath math={item.value} />
                                   </FormLabel>
                                 </div>
                                 <div className="flex flex-auto items-center justify-end gap-2">
-                                  <Trash2
-                                    onClick={() => removeHistory([item.id])}
-                                    className="cursor-pointer text-red-500"
-                                    size="14"
-                                  />
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Info size="14" className="cursor-pointer text-gray-500" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <div className="max-w-[300px]">{item.value}</div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                   <Copy
                                     onClick={() => copyLatex([item.id])}
                                     className="cursor-pointer text-green-500"
