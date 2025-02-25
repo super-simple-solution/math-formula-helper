@@ -85,8 +85,8 @@ importers:
         specifier: ^1.9.4
         version: 1.9.4
       '@types/chrome':
-        specifier: ^0.0.280
-        version: 0.0.280
+        specifier: 0.0.306
+        version: 0.0.306
       '@types/node':
         specifier: ^22.13.4
         version: 22.13.4
@@ -1138,6 +1138,9 @@ packages:
 
   '@types/chrome@0.0.280':
     resolution: {integrity: sha512-AotSmZrL9bcZDDmSI1D9dE7PGbhOur5L0cKxXd7IqbVizQWCY4gcvupPUVsQ4FfDj3V2tt/iOpomT9EY0s+w1g==}
+
+  '@types/chrome@0.0.306':
+    resolution: {integrity: sha512-95kgcqvTNcaZCXmx/kIKY6uo83IaRNT3cuPxYqlB2Iu+HzKDCP4t7TUe7KhJijTdibcvn+SzziIcfSLIlgRnhQ==}
 
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
@@ -4117,6 +4120,11 @@ snapshots:
       '@babel/types': 7.26.9
 
   '@types/chrome@0.0.280':
+    dependencies:
+      '@types/filesystem': 0.0.36
+      '@types/har-format': 1.2.16
+
+  '@types/chrome@0.0.306':
     dependencies:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16
