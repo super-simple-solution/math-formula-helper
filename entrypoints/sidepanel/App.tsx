@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from '@/lib'
 import { sendBrowserMessage } from '@/lib/extension-action'
-import { latexFormat } from '@/lib/latex'
+import { LatexSymbol, latexFormat } from '@/lib/latex'
 import {
   type LatexHistory,
   LatexQueue,
@@ -14,7 +14,7 @@ import {
   watchPreference,
 } from '@/lib/storage'
 import { Copy, FileStack, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { Tabs } from 'wxt/browser'
 import { Placeholder } from './components/placeholder'
@@ -22,19 +22,28 @@ import { formInit } from './const'
 
 type HistoryMap = Record<string, LatexHistory>
 
+function urlParse(url: string) {
+  return url.split('#')[0]
+}
+
 async function copy(content: string) {
   await navigator.clipboard.writeText(content)
   toast({
     text: 'Copied Successful. ✨',
   })
 }
-// TODO: when active url update, get url
+
 function SiderPanelApp() {
   const [list, setList] = useState<LatexHistory[]>([])
-  const [map, setMap] = useState<HistoryMap>()
+  const curMapRef = useRef<HistoryMap>({})
   const [historyList, setHistoryList] = useState<LatexHistory[]>([])
+  const tabIdRef = useRef(0)
   const [tabUrl, setTabUrl] = useState<string>()
-  const [prefer, setPrefer] = useState<Prefer>()
+
+  const preferRef = useRef<Prefer>({
+    show_toast: false,
+    format_signs: LatexSymbol.Inline,
+  })
 
   const form = useForm({
     defaultValues: formInit(),
@@ -48,37 +57,39 @@ function SiderPanelApp() {
   }
 
   const getContent = (idList: string[]) => {
-    if (!map) return ''
+    if (!curMapRef.current) return ''
     const contentList = idList.map((id) => {
-      if (map[id] && prefer) {
-        map[id].value
-        return latexFormat(map[id].value, prefer)
+      if (curMapRef.current[id]) {
+        curMapRef.current[id].value
+        return latexFormat(curMapRef.current[id].value, preferRef.current)
       }
       return ''
     })
     return contentList.join(',')
   }
 
-  const getTabUrl = () => {
+  const setPrefer = (prefer: Prefer) => {
+    preferRef.current = prefer
+  }
+
+  const getTabInfo = () => {
     return sendBrowserMessage({
       greeting: 'get-active-tab',
     }).then((tab) => {
-      const url = (tab as Tabs.Tab).url
-      if (url?.startsWith('http')) {
-        setTabUrl(url)
+      const { url, id } = tab as Tabs.Tab
+      if (url && id) {
+        tabIdRef.current = id
+        setTabUrl(urlParse(url))
       }
       return true
     })
   }
 
-  const handleTabActivated = async (activeInfo: { tabId: number }) => {
-    try {
-      const tab = await browser.tabs.get(activeInfo.tabId)
-      if (tab?.url) {
-        setTabUrl(tab.url)
-      }
-    } catch (error) {
-      console.error('Failed to get tab details:', error)
+  const handleTabUpdated = async (tabId: number, changeInfo: { url?: string }) => {
+    console.log(tabIdRef.current, 'tabInfoRef.current')
+    if (tabId !== tabIdRef.current) return
+    if (changeInfo.url) {
+      setTabUrl(urlParse(changeInfo.url))
     }
   }
 
@@ -91,17 +102,17 @@ function SiderPanelApp() {
       map[item.id] = item
       return map
     }, {} as HistoryMap)
-    setMap(newItemMap)
+    curMapRef.current = newItemMap
   }, [list])
 
   useEffect(() => {
-    getTabUrl().then(() => getList([]))
+    getTabInfo().then(() => getList([]))
     getPreference().then(setPrefer)
-    browser.tabs.onActivated.addListener(handleTabActivated)
+    browser.tabs.onUpdated.addListener(handleTabUpdated)
     const unwatchLatex = LatexQueue.watch(getList)
     const unwatchPrefer = watchPreference(setPrefer)
     return () => {
-      browser.tabs.onActivated.removeListener(handleTabActivated)
+      browser.tabs.onUpdated.removeListener(handleTabUpdated)
       unwatchLatex()
       unwatchPrefer()
     }
@@ -138,7 +149,6 @@ function SiderPanelApp() {
 
   const removeSelectedHistory = () => {
     const { idList } = form.getValues()
-    console.log(idList, 'remove data')
     removeHistory(idList)
     toast({
       text: 'Deleted successfully.',

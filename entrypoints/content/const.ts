@@ -211,7 +211,6 @@ function katexContentExtra(content: string) {
 }
 
 function latexRefine(content: string) {
-  console.log(content, 'content')
   const trimmedContent = trimPunctuation(content.trim())
     .replace(/\\&\\text{nbsp};/g, '\\enspace')
     .replace(/&nbsp;/g, '\\enspace')
@@ -219,7 +218,6 @@ function latexRefine(content: string) {
   if (trimmedContent.includes('\\\\') && !trimmedContent.startsWith('\\begin')) {
     return `\\begin{array}{c} ${trimmedContent} \\end{array}`
   }
-  console.log(trimmedContent, 'trimmedContent')
   return trimmedContent
 }
 

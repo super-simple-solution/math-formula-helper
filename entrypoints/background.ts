@@ -3,8 +3,6 @@ import generateCSS from '@/lib/style'
 import { browser } from 'wxt/browser'
 
 export default defineBackground(() => {
-  console.log('Hello background!', { id: browser.runtime.id })
-
   const contentReq = {
     'insert-css': insertCSS,
     'get-active-tab': getActiveTab,
@@ -23,7 +21,6 @@ export default defineBackground(() => {
     browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
       if (tabs.length > 0) {
         const tab = tabs[0]
-        console.log('get active Current tab:', tab.id)
         sendResponse(tab)
       }
     })

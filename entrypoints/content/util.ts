@@ -58,7 +58,7 @@ export async function copyLatex(latexContent: string, options = { text: 'Copied'
     toast(options)
   }
   LatexQueue.enqueue({
-    url: location.href,
+    url: location.href.replace(location.hash, ''),
     value: latexContent, // 存储不带格式的latex, 使用时再带格式
     id: uuid(),
   })
