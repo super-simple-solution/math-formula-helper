@@ -208,9 +208,9 @@ function SiderPanelApp() {
                         name="idList"
                         render={({ field }) => {
                           return (
-                            <FormItem key={item.id}>
-                              <div className="flex cursor-pointer flex-row items-center gap-2 space-y-0 px-4 py-2 hover:bg-muted">
-                                <div className="flex flex-1 items-center">
+                            <FormItem key={item.id} className="w-full">
+                              <div className="flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2 hover:bg-muted">
+                                <div className="flex min-w-[288px] items-center">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value.includes(item.id)}
@@ -223,15 +223,20 @@ function SiderPanelApp() {
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="cursor-pointer pl-3 font-normal leading-6">
+                                  <FormLabel className="cursor-pointer pl-3 font-normal text-sm leading-6">
                                     {item.value}
                                   </FormLabel>
                                 </div>
-                                <div className="flex flex-end items-center gap-2">
+                                <div className="flex flex-auto items-center justify-end gap-2">
+                                  <Trash2
+                                    onClick={() => removeHistory([item.id])}
+                                    className="cursor-pointer text-red-500"
+                                    size="14"
+                                  />
                                   <Copy
                                     onClick={() => copyLatex([item.id])}
                                     className="cursor-pointer text-green-500"
-                                    size="16"
+                                    size="14"
                                   />
                                 </div>
                               </div>
