@@ -66,10 +66,10 @@ export function Feedback() {
         <div className="mt-4 rounded-lg border p-4 shadow">
           <div className="flex items-center gap-4 ">
             <a href="https://t.me/zp_mh" target="_blank" rel="noreferrer">
-              <img src={Telegram} alt="" className="w-10" />
+              <img src={Telegram} alt="telegram" className="w-10" />
             </a>
-            <a href="mailto:example@example.com">
-              <img src={Email} alt="" className="w-10" />
+            <a href="mailto:zhangpanrobot@gmail.com">
+              <img src={Email} alt="email" className="w-10" />
             </a>
           </div>
           <div className="mt-2 text-gray-500">Chat with us on Telegram or send us an Email</div>
