@@ -35,7 +35,7 @@ export function Preference() {
     getPreference().then((res) => {
       setPrefer(res)
     })
-  })
+  }, [])
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setPreference(data)
