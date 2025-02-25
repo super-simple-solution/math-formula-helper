@@ -30,6 +30,7 @@ export const rules: Record<string, Rule> = {
       'https://zhuanlan.zhihu.com/p/115277553',
       'https://wuli.wiki/online/ODEa1.html',
       'https://ieeexplore.ieee.org/document/9072123',
+      'https://math.stackexchange.com/questions/4819923/solving-the-system-frac1x-frac12y-x23y23x2y2-frac1',
     ],
     selectorList: [
       '.MathJax_Preview + .MathJax',
