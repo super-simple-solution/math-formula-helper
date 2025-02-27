@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from '@/lib'
+import { ToastType, toast } from '@/lib/toast'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
@@ -13,6 +14,7 @@ import { FormSchema } from './const'
 import { feedbackApi, formInit, uploadImage } from './util'
 
 export function Feedback() {
+  const [isLoading, setlsLoading] = useState(false)
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: formInit(),
@@ -28,13 +30,19 @@ export function Feedback() {
       return
     }
     data.image_urls = imageUrls
+    setlsLoading(true)
     try {
       await feedbackApi(data)
+      setlsLoading(false)
       toast({
         text: 'Thank you! Your feedback has been received and is greatly appreciated! 🌟',
       })
-    } catch (e) {
-      console.error(e.message)
+    } catch {
+      setlsLoading(false)
+      toast({
+        text: 'Ops, something went wrong, please try again later',
+        type: ToastType.Success,
+      })
     }
   }
   const handleRemoveImage = (index: number) => {
@@ -174,7 +182,10 @@ export function Feedback() {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="animate-spin" />}
+                {isLoading ? 'Please wait' : 'Save'}
+              </Button>
             </form>
           </Form>
         </div>

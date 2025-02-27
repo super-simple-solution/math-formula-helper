@@ -1,6 +1,7 @@
-import { toast, uuid } from '@/lib'
+import { uuid } from '@/lib'
 import { latexFormat } from '@/lib/latex'
 import { LatexQueue, type Prefer, getPreference, watchPreference } from '@/lib/storage'
+import { toast } from '@/lib/toast'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import { MathMLToLaTeX } from 'mathml-to-latex'
 import type { Unwatch } from 'wxt/storage'

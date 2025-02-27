@@ -5,7 +5,6 @@ module.exports = {
   darkMode: ['class'],
   safelist: ['dark'],
   prefix: '',
-
   content: [
     './entrypoints/**/*.{ts,tsx,html}',
     './components/**/*.{ts,tsx,html}',

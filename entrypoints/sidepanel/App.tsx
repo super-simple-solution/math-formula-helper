@@ -3,7 +3,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { toast } from '@/lib'
 import { sendBrowserMessage } from '@/lib/extension-action'
 import { LatexSymbol, latexFormat } from '@/lib/latex'
 import {
@@ -13,6 +12,7 @@ import {
   getPreference,
   watchPreference,
 } from '@/lib/storage'
+import { toast } from '@/lib/toast'
 import { Copy, FileStack, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -220,7 +220,7 @@ function SiderPanelApp() {
                           return (
                             <FormItem key={item.id} className="w-full">
                               <div className="flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2 hover:bg-muted">
-                                <div className="flex items-center">
+                                <div className="flex w-full items-center ">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value.includes(item.id)}
@@ -237,7 +237,7 @@ function SiderPanelApp() {
                                     {item.value}
                                   </FormLabel>
                                 </div>
-                                <div className="flex flex-auto items-center justify-end">
+                                <div className="flexflex-auto items-center justify-end">
                                   {/* katex */}
                                   {/* <TooltipProvider>
                                     <Tooltip>
