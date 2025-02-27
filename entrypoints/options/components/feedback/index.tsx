@@ -28,10 +28,14 @@ export function Feedback() {
       return
     }
     data.image_urls = imageUrls
-    await feedbackApi(data)
-    toast({
-      text: 'Thank you! Your feedback has been received and is greatly appreciated! 🌟',
-    })
+    try {
+      await feedbackApi(data)
+      toast({
+        text: 'Thank you! Your feedback has been received and is greatly appreciated! 🌟',
+      })
+    } catch (e) {
+      console.error(e.message)
+    }
   }
   const handleRemoveImage = (index: number) => {
     const newImageUrls = [...imageUrls]

@@ -21,6 +21,7 @@ export async function feedbackApi(data: Feedback) {
     },
     body: JSON.stringify({
       product: 'latex',
+      status: 1,
       ...data,
     }),
   })
