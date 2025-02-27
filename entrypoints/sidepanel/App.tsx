@@ -19,7 +19,6 @@ import { useForm } from 'react-hook-form'
 import type { Tabs } from 'wxt/browser'
 import { Placeholder } from './components/placeholder'
 import { formInit } from './const'
-import 'katex/dist/katex.min.css'
 
 type HistoryMap = Record<string, LatexHistory>
 
