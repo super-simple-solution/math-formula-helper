@@ -27,4 +27,4 @@ web-ext.config.ts
 dist
 
 .env
-.env.local
+.env.*
