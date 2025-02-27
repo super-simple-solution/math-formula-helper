@@ -220,7 +220,7 @@ function SiderPanelApp() {
                           return (
                             <FormItem key={item.id} className="w-full">
                               <div className="flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2 hover:bg-muted">
-                                <div className="flex min-w-[250px] items-center">
+                                <div className="flex items-center">
                                   <FormControl>
                                     <Checkbox
                                       checked={field.value.includes(item.id)}
@@ -233,11 +233,11 @@ function SiderPanelApp() {
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="cursor-pointer overflow-hidden pl-3 font-normal text-xs leading-6">
+                                  <FormLabel className="w-full cursor-pointer overflow-hidden pl-3 font-normal text-xs leading-6">
                                     {item.value}
                                   </FormLabel>
                                 </div>
-                                <div className="flex flex-auto items-center justify-end gap-2">
+                                <div className="flex flex-auto items-center justify-end">
                                   {/* katex */}
                                   {/* <TooltipProvider>
                                     <Tooltip>
