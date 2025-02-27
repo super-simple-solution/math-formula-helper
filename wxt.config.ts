@@ -2,12 +2,11 @@ import react from '@vitejs/plugin-react'
 import biomePlugin from 'vite-plugin-biome'
 import { defineConfig } from 'wxt'
 
-// See https://wxt.dev/api/config.html
 export default defineConfig({
   manifest: {
     permissions: ['scripting', 'storage', 'sidePanel', 'tabs'],
     name: 'LaTeX Copy',
-    version: '0.2.7',
+    version: '0.2.8',
     description: 'Make copying LaTeX effortless and efficient!',
     host_permissions: ['<all_urls>'],
     action: {

@@ -1,8 +1,8 @@
-import { type Feedback } from './const'
+import type { Feedback } from './const'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 
-export function formInit() {
+export function formInit(): Feedback {
   return {
     problem: '',
     email: '',
@@ -12,7 +12,7 @@ export function formInit() {
 }
 
 export async function feedbackApi(data: Feedback) {
-  return await fetch(supabaseUrl + '/rest/v1/feedback', {
+  return await fetch(`${supabaseUrl}/rest/v1/feedback`, {
     method: 'POST',
     headers: {
       apikey: supabaseKey,

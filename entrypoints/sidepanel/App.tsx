@@ -13,10 +13,9 @@ import {
   getPreference,
   watchPreference,
 } from '@/lib/storage'
-import { Copy, FileStack, Info, Trash2 } from 'lucide-react'
+import { Copy, FileStack, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { BlockMath } from 'react-katex'
 import type { Tabs } from 'wxt/browser'
 import { Placeholder } from './components/placeholder'
 import { formInit } from './const'
@@ -236,11 +235,12 @@ function SiderPanelApp() {
                                     />
                                   </FormControl>
                                   <FormLabel className="cursor-pointer overflow-hidden pl-3 font-normal text-xs leading-6">
-                                    <BlockMath math={item.value} />
+                                    {item.value}
                                   </FormLabel>
                                 </div>
                                 <div className="flex flex-auto items-center justify-end gap-2">
-                                  <TooltipProvider>
+                                  {/* katex */}
+                                  {/* <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Info size="14" className="cursor-pointer text-gray-500" />
@@ -249,7 +249,7 @@ function SiderPanelApp() {
                                         <div className="max-w-[300px]">{item.value}</div>
                                       </TooltipContent>
                                     </Tooltip>
-                                  </TooltipProvider>
+                                  </TooltipProvider> */}
                                   <Copy
                                     onClick={() => copyLatex([item.id])}
                                     className="cursor-pointer text-green-500"

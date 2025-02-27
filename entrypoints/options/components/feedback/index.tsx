@@ -72,11 +72,13 @@ export function Feedback() {
               <img src={Email} alt="email" className="w-10" />
             </a>
           </div>
-          <div className="mt-2 text-gray-500">Chat with us on Telegram or send us an Email</div>
+          <div className="mt-2 text-gray-500">
+            Reach out to us on Telegram or via email - we're here to help!
+          </div>
         </div>
       </div>
       <div>
-        <div className="font-bold text-xl">Need Help? Let Us Know Your Issues</div>
+        <div className="font-bold text-xl">Need Help or Have Feedback? Let Us Know!</div>
         <div className="mt-4 rounded-lg border p-4 shadow-md">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6">
@@ -102,11 +104,11 @@ export function Feedback() {
                 name="url"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="mb-1 text-base">Web Link</div>
+                    <div className="mb-1 text-base">URL</div>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Please enter the web page link for the problem"
+                        placeholder="Please enter the full URL where you encountered the issue (optional)"
                         className="resize-none"
                       />
                     </FormControl>
@@ -123,7 +125,7 @@ export function Feedback() {
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Please input your Email"
+                        placeholder="Enter email to receive update notifications when the issue is resolved (optional)"
                         className="resize-none"
                       />
                     </FormControl>
