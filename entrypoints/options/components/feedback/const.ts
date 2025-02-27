@@ -8,7 +8,10 @@ export type Feedback = {
 }
 
 export const FormSchema = z.object({
-  problem: z.string().min(1, { message: 'Problem description is required.' }),
+  problem: z
+    .string()
+    .min(1, { message: 'Problem description is required.' })
+    .max(500, { message: 'Max 500 characters.' }),
   url: z.string().url({ message: 'Please enter a valid url.' }).optional().or(z.literal('')),
   email: z
     .string()

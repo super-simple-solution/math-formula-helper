@@ -41,7 +41,7 @@ export function Feedback() {
       setlsLoading(false)
       toast({
         text: 'Ops, something went wrong, please try again later',
-        type: ToastType.Success,
+        type: ToastType.Danger,
       })
     }
   }
@@ -104,6 +104,7 @@ export function Feedback() {
                       <Textarea
                         placeholder="Please describe the problem you encountered (required)"
                         className="resize-none"
+                        maxLength={500}
                         {...field}
                       />
                     </FormControl>
