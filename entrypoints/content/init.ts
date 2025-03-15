@@ -12,11 +12,21 @@ let count = 0
 let inited = false
 let canCopyAll = false
 let rule: Rule | undefined
-function init(resetCount: boolean) {
+async function init(resetCount: boolean) {
   if (inited) return
   if (resetCount) count = 0
   if (document.visibilityState === 'hidden') return
-  rule = Object.values(rules).find((item) => document.querySelector(item.selectorList.join()))
+  const ruleKey = await sendBrowserMessage({
+    greeting: 'get-pattern',
+    data: {
+      domain: location.hostname,
+    },
+  })
+  if (ruleKey) {
+    rule = rules[ruleKey as string]
+  } else {
+    rule = Object.values(rules).find((item) => document.querySelector(item.selectorList.join()))
+  }
   if (count > 5) return
   count++
   if (!rule) {

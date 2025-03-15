@@ -1,6 +1,6 @@
 import {browser} from "wxt/browser"
 
-type GreetingType = 'insert-css' | 'get-active-tab'
+type GreetingType = 'insert-css' | 'get-active-tab' | 'get-pattern'
 
 export type BrowserRequest = {
   greeting: GreetingType,

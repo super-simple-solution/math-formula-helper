@@ -1,10 +1,11 @@
 import { type Unwatch, storage } from 'wxt/storage'
 import { defaultLatexSymbol } from '../latex'
-import type { LatexHistory, Prefer } from './types'
+import type { LatexHistory, Pattern, PatternCache, Prefer } from './types'
 export type { Prefer, LatexHistory }
 
 const PREFER = 'sync:preference'
 const LATEX_HISTORY = 'local:latex_history'
+const PATTERN = 'local:pattern'
 
 export async function getPreference() {
   const prefer = await storage.getItem<Prefer>(PREFER)
@@ -44,4 +45,16 @@ export const LatexQueue = {
   watch(cb: (newValue: LatexHistory[]) => void): Unwatch {
     return storage.watch<LatexHistory[]>(LATEX_HISTORY, (newValue) => newValue && cb(newValue))
   }
+}
+
+export async function getPattern() {
+  const pattern = await storage.getItem<PatternCache>(PATTERN)
+  return pattern ? pattern : {data: [], time: Date.now()}
+}
+
+export async function setPattern(data: Pattern[]) {
+  await storage.setItem<PatternCache>(PATTERN, {
+    time: Date.now(),
+    data
+  })
 }

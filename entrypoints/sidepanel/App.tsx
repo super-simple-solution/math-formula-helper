@@ -86,7 +86,6 @@ function SiderPanelApp() {
   }
 
   const handleTabUpdated = async (tabId: number, changeInfo: { url?: string }) => {
-    console.log(tabIdRef.current, 'tabInfoRef.current')
     if (tabId !== tabIdRef.current) return
     if (changeInfo.url) {
       setTabUrl(urlParse(changeInfo.url))

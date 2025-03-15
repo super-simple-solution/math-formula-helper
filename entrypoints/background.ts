@@ -1,11 +1,18 @@
 import { type handlerParams, initEventHandler } from '@/lib/extension-action'
+import { getPattern, refreshPattern } from '@/lib/pattern'
 import generateCSS from '@/lib/style'
 import { browser } from 'wxt/browser'
 
 export default defineBackground(() => {
   const contentReq = {
+    'get-pattern': getPatternByDomain,
     'insert-css': insertCSS,
     'get-active-tab': getActiveTab,
+  }
+
+  async function getPatternByDomain(params: handlerParams) {
+    const { data, sendResponse } = params
+    getPattern({ domain: data?.domain }, sendResponse)
   }
 
   function insertCSS(params: handlerParams) {
@@ -62,4 +69,6 @@ export default defineBackground(() => {
   browser.tabs.onRemoved.addListener(async (tabId) => {
     tabSet.delete(tabId)
   })
+
+  browser.runtime.onInstalled.addListener(refreshPattern)
 })
