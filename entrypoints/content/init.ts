@@ -44,23 +44,27 @@ async function init(resetCount: boolean) {
   const curRule = canCopyAll ? ImageAltRule : rule
   const selector = curRule.selectorList.join()
 
-  document.body.addEventListener('click', (e) => {
-    const target = e.target
-    const finalTarget = (target as HTMLElement).closest(selector) as HTMLElement
-    if (!finalTarget) return
-    curRule.parse(finalTarget).then((res) => {
-      if (res) {
-        let content: string | Blob
-        if (typeof res === 'string') {
-          content = curRule.pre(res) as string
-          curRule.post(finalTarget, content)
-        } else if (res instanceof Blob) {
-          content = curRule.pre(res) as Blob
-          curRule.post(finalTarget, content)
+  document.body.addEventListener(
+    'click',
+    (e) => {
+      const target = e.target
+      const finalTarget = (target as HTMLElement).closest(selector) as HTMLElement
+      if (!finalTarget) return
+      curRule.parse(finalTarget).then((res) => {
+        if (res) {
+          let content: string | Blob
+          if (typeof res === 'string') {
+            content = curRule.pre(res) as string
+            curRule.post(finalTarget, content)
+          } else if (res instanceof Blob) {
+            content = curRule.pre(res) as Blob
+            curRule.post(finalTarget, content)
+          }
         }
-      }
-    })
-  })
+      })
+    },
+    true,
+  )
 }
 
 function eventInit() {

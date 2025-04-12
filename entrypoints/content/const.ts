@@ -63,9 +63,10 @@ export const rules: Record<string, Rule> = {
         el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
 
       const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
+      // TODO: 'moonshot.cn'， 'yiyan.baidu.com'无法解析'.katex-html'里的内容; 因katex output为htmlonly https://katex.org/docs/options.html
       const mathTexElDomainList = ['chat.deepseek', 'csdn.net', 'bananaspace.org']
 
-      const host = location.host
+      const host = location.hostname
       // 获取数学公式dom及属性
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding')?.includes('application/x-tex')) {
