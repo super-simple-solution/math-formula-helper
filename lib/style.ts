@@ -1,6 +1,7 @@
 const containerStyle = `{
   position: relative;
   cursor: pointer;
+  display: inline-block;
 }`
 
 const containerHoverStyle = `{
