@@ -133,7 +133,7 @@ export const rules: Record<string, Rule> = {
       'div[data-type="formula"]:has(img[dataset-id="formula"])',
     ],
     parse: async (el: HTMLElement) => {
-      const host = location.host
+      const host = location.hostname
       let latexContent = ''
       if (host.includes('baike.')) {
         latexContent = getEle('img[dataset-id="formula"]', el)?.getAttribute(

@@ -12,9 +12,9 @@ let count = 0
 let inited = false
 let canCopyAll = false
 let rule: Rule | undefined
-async function init(resetCount: boolean) {
+async function init(isReset: boolean) {
   if (inited) return
-  if (resetCount) count = 0
+  if (isReset) count = 0
   if (document.visibilityState === 'hidden') return
   const ruleKey = await sendBrowserMessage({
     greeting: 'get-pattern',
@@ -30,7 +30,7 @@ async function init(resetCount: boolean) {
   if (count > 5) return
   count++
   if (!rule) {
-    setTimeout(init, 2000)
+    setTimeout(() => init(false), 2000)
     return
   }
   inited = true
