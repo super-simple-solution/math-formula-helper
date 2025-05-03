@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clipboard-polyfill": "^4.1.1",
     "clsx": "^2.1.1",
+    "delay": "^6.0.0",
     "hotkeys-js": "^3.13.9",
     "lucide-react": "^0.475.0",
     "mathml-to-latex": "^1.4.3",

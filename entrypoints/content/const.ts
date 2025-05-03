@@ -1,4 +1,5 @@
 import { getEle } from '@/lib'
+import delay from 'delay'
 import { addCopiedStyle, copyLatex, copyLatexAsImage, initMathml, svgToImage } from './util'
 
 export const ImageAltRule = {
@@ -63,8 +64,9 @@ export const rules: Record<string, Rule> = {
         el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
 
       const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
-      // TODO: 'moonshot.cn'， 'yiyan.baidu.com'无法解析'.katex-html'里的内容; 因katex output为htmlonly https://katex.org/docs/options.html
       const mathTexElDomainList = ['chat.deepseek', 'csdn.net', 'bananaspace.org']
+      // TODO: 'moonshot.cn', 'yiyan.baidu.com', 'yuanbao.tencent.com'无法解析'.katex-html'里的内容; 因katex output为htmlonly https://katex.org/docs/options.html
+      const mathHTMLDomainList = ['moonshot.cn', 'yuanbao.tencent.com']
 
       const host = location.hostname
       // 获取数学公式dom及属性
@@ -79,6 +81,36 @@ export const rules: Record<string, Rule> = {
           ?.querySelector('.hidden')
         // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
         latexContent = microsoftTexEl?.textContent as string
+      } else if (mathHTMLDomainList.find((domain) => host.includes(domain))) {
+        // 当前聊天泡泡
+        const chatBubbleContainer = el.closest(
+          '.agent-chat__list__item, .chat-content-item, .dialogue_card_item',
+        )
+        const copyButton = chatBubbleContainer?.querySelector(
+          '.agent-chat__toolbar__copy, .segment-assistant-actions-content>.simple-button',
+        ) as HTMLElement
+        const targetIndex = Array.from(
+          chatBubbleContainer?.querySelectorAll('.katex') || [],
+        ).findIndex((item) => item === el)
+        copyButton?.click()
+        await delay(50)
+        const clipboardContents = await navigator.clipboard.read()
+        for (const item of clipboardContents) {
+          for (const mimeType of item.types) {
+            if (mimeType === 'text/plain') {
+              const blob = await item.getType('text/plain')
+              const blobText = await blob.text()
+              const pureText = blobText.includes('```latex')
+                ? blobText.replaceAll(/\`\`\`latex(.|\n|\s)+?\`\`\`/gm, '')
+                : blobText
+              const latexList = [...pureText.matchAll(/\\[\[\(]((?:.|\n|\s)+?)\\[\]\)]/gm)]
+              const targetLatexItem = latexList[targetIndex]
+              if (targetLatexItem) {
+                return targetLatexItem[1]
+              }
+            }
+          }
+        }
       } else if (mathTexEl) {
         if (mathTexElDomainList.find((domain) => host.includes(domain))) {
           latexContent = katexContentExtra(mathTexEl.textContent as string)
