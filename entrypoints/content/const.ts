@@ -128,13 +128,11 @@ export const rules: Record<string, Rule> = {
     post,
   },
   math_jax_html: {
-    testUrl: [
-      'https://www.mathreference.org/',
-      'https://www.sciencedirect.com/science/article/pii/S2095809919302279',
-    ],
-    selectorList: ['mjx-container.MathJax'],
+    testUrl: [],
+    selectorList: ['mjx-container.MathJax', 'math'],
     parse: async (el: HTMLElement) => {
-      const mathEl = el.querySelector('mjx-assistive-mml')
+      const mathEl =
+        el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
       // svg with no content
       if (!mathEl) {
         const svgEl = el.querySelector('svg')
@@ -144,7 +142,7 @@ export const rules: Record<string, Rule> = {
         }
       } else {
         return initMathml().then(() => {
-          const latexContent = window.Mathml2latex.convert(mathEl.innerHTML)
+          const latexContent = window.Mathml2latex.convert(mathEl.outerHTML)
           return latexContent
         })
       }
