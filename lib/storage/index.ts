@@ -49,7 +49,7 @@ export const LatexQueue = {
 
 export async function getPattern() {
   const pattern = await storage.getItem<PatternCache>(PATTERN)
-  return pattern ? pattern : {data: [], time: Date.now()}
+  return pattern && Object.keys(pattern).length ? pattern: {data: [], time: Date.now()}
 }
 
 export async function setPattern(data: Pattern[]) {

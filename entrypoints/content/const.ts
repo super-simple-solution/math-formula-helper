@@ -131,8 +131,7 @@ export const rules: Record<string, Rule> = {
     testUrl: [],
     selectorList: ['mjx-container.MathJax', 'math'],
     parse: async (el: HTMLElement) => {
-      const mathEl =
-        el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
+      const mathEl = el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
       // svg with no content
       if (!mathEl) {
         const svgEl = el.querySelector('svg')
