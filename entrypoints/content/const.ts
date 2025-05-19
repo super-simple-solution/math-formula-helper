@@ -159,6 +159,7 @@ export const rules: Record<string, Rule> = {
       '.mwe-math-element',
       'img[class*="tex-img"]',
       'img[class*="latex"]',
+      'img[class*="formula"]',
       '[data-attrid^="variable"] img',
       '[data-attrid="formula-image"]',
       'div[data-type="formula"]:has(img[dataset-id="formula"])',
