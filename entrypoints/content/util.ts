@@ -4,7 +4,7 @@ import { LatexQueue, type Prefer, getPreference, watchPreference } from '@/lib/s
 import { toast } from '@/lib/toast'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import { MathMLToLaTeX } from 'mathml-to-latex'
-import type { Unwatch } from 'wxt/storage'
+import type { Unwatch } from 'wxt/utils/storage'
 
 let preferData: Prefer
 

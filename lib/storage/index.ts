@@ -1,4 +1,4 @@
-import { type Unwatch, storage } from 'wxt/storage'
+import type { Unwatch } from 'wxt/utils/storage'
 import { defaultLatexSymbol } from '../latex'
 import type { LatexHistory, Pattern, PatternCache, Prefer } from './types'
 export type { Prefer, LatexHistory }

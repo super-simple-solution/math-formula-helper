@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .sss-img-latex {
   position: absolute;
   z-index: 9999;
