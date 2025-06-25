@@ -12,7 +12,9 @@ export default defineBackground(() => {
 
   async function getPatternByDomain(params: handlerParams) {
     const { data, sendResponse } = params
-    getPattern({ domain: data?.domain }, sendResponse)
+    // 修复类型错误，确保 data 是对象且有 domain 属性
+    const domain = (data && typeof data === 'object' && 'domain' in data) ? (data as { domain?: string }).domain : undefined
+    getPattern({ domain }, sendResponse)
   }
 
   function insertCSS(params: handlerParams) {
@@ -71,4 +73,6 @@ export default defineBackground(() => {
   })
 
   browser.runtime.onInstalled.addListener(refreshPattern)
+
+  browser.runtime.setUninstallURL('https://forms.gle/PB5q95cJbxQ6jpQV8')
 })
