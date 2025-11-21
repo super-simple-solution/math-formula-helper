@@ -1,17 +1,10 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": { "enabled": true },
+  "$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      "out",
-      "build",
-      "public",
-      "tsconfig.*",
-      ".vscode",
-      ".nx",
-      "**/components/ui/*.tsx"
+    "includes": [
+      "**/entrypoints",
+      "**/lib"
     ]
   },
   "linter": {
@@ -21,13 +14,20 @@
         "useKeyWithClickEvents": "off"
       },
       "nursery": {
-        "useSortedClasses": "error"
+        "useSortedClasses": {
+          "level": "error",
+          "fix": "safe",
+          "options": {
+            "attributes": ["className", "classList"],
+            "functions": ["clsx", "cva", "tw", "cn"]
+          }
+        }
       },
       "suspicious": {
-        "noConsoleLog": "off",
         "noEmptyInterface": "off",
         "noArrayIndexKey": "warn",
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noConsole": { "level": "off", "options": { "allow": ["log"] } }
       },
       "recommended": true,
       "correctness": {
@@ -54,8 +54,10 @@
     "lineWidth": 100
   },
   "javascript": {
+    "jsxRuntime": "reactClassic",
     "formatter": {
       "quoteStyle": "single",
+      "jsxQuoteStyle": "single",
       "semicolons": "asNeeded"
     }
   }

@@ -13,7 +13,10 @@ export default defineBackground(() => {
   async function getPatternByDomain(params: handlerParams) {
     const { data, sendResponse } = params
     // 修复类型错误，确保 data 是对象且有 domain 属性
-    const domain = (data && typeof data === 'object' && 'domain' in data) ? (data as { domain?: string }).domain : undefined
+    const domain =
+      data && typeof data === 'object' && 'domain' in data
+        ? (data as { domain?: string }).domain
+        : undefined
     getPattern({ domain }, sendResponse)
   }
 
