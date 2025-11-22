@@ -5,14 +5,14 @@ import type { Pattern, PatternCache } from "./storage/types"
 
 const SYNC_HOUR = 3
 
-let patternCache:PatternCache = { data: [], time: 0 }
+let patternCache: PatternCache = { data: [], time: 0 }
 
 function getRule(patternList: Pattern[], domain: string) {
   return (patternList || []).find((rule) => rule.domain.find(domainMatch(domain)))
 }
 
 // 内存cache/storage/远端
-export async function getPattern({ forceUpdate = false, domain = ''}, cb?: (message: unknown) => void) {
+export async function getPattern({ forceUpdate = false, domain = '' }, cb?: (message: unknown) => void) {
   if (!patternCache.time) {
     patternCache = await getPatternStorage()
   }
@@ -28,7 +28,7 @@ export async function getPattern({ forceUpdate = false, domain = ''}, cb?: (mess
     ruleTarget = getRule(patternList, domain)
   }
   // biome-ignore lint/complexity/useOptionalChain: <explanation>
-  cb && cb(ruleTarget ? ruleTarget.rule_key: '')
+  cb && cb(ruleTarget ? ruleTarget.rule_key : '')
 }
 
 export function refreshPattern() {
@@ -40,12 +40,37 @@ function domainMatch(domain: string) {
 }
 
 async function patternApi(): Promise<Pattern[]> {
-  return await fetch(`${supabaseUrl}/rest/v1/latex`, {
-    method: 'GET',
-    headers: {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
-      'Content-Type': 'application/json',
-    },
-  }).then(res => res.json())
+  // return await fetch(`${supabaseUrl}/rest/v1/latex`, {
+  //   method: 'GET',
+  //   headers: {
+  //     apikey: supabaseKey,
+  //     Authorization: `Bearer ${supabaseKey}`,
+  //     'Content-Type': 'application/json',
+  //   },
+  // }).then(res => res.json())
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('Supabase URL or Key is missing. Fallback to local rules.');
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${supabaseUrl}/rest/v1/latex`, {
+      method: 'GET',
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    // 2. 捕获错误，防止从后台崩溃
+    console.error('Failed to fetch patterns:', error);
+    return [];
+  }
 }

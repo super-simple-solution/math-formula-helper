@@ -1,5 +1,5 @@
 import type { Unwatch } from 'wxt/utils/storage'
-import { defaultLatexSymbol } from '../latex'
+import { defaultLatexSymbol, defaultNormalization } from '../latex'
 import type { LatexHistory, Pattern, PatternCache, Prefer } from './types'
 export type { Prefer, LatexHistory }
 
@@ -9,16 +9,34 @@ const PATTERN = 'local:pattern'
 
 export async function getPreference() {
   const prefer = await storage.getItem<Prefer>(PREFER)
-  const { show_toast = true, format_signs = defaultLatexSymbol } = prefer || {}
-  return { show_toast, format_signs }
+  // const { show_toast = true, format_signs = defaultLatexSymbol } = prefer || {}
+  // return { show_toast, format_signs }
+  // 核心修复：为 normalization 添加默认值 defaultNormalization
+  const {
+    show_toast = true,
+    format_signs = defaultLatexSymbol,
+    normalization = defaultNormalization
+  } = prefer || {}
+  return { show_toast, format_signs, normalization }
 }
 
 export async function setPreference(data: Prefer) {
   await storage.setItem<Prefer>(PREFER, data)
 }
 
-export function watchPreference(cb: (newValue: Prefer) => void): Unwatch  {
-  return storage.watch<Prefer>(PREFER, (newValue) => newValue && cb(newValue))
+export function watchPreference(cb: (newValue: Prefer) => void): Unwatch {
+  // return storage.watch<Prefer>(PREFER, (newValue) => newValue && cb(newValue))
+  // 核心修复：watch 到的数据可能是旧的（缺少 normalization），需要合并默认值
+  return storage.watch<Prefer>(PREFER, (newValue) => {
+    if (newValue) {
+      const safeValue: Prefer = {
+        show_toast: newValue.show_toast ?? true,
+        format_signs: newValue.format_signs ?? defaultLatexSymbol,
+        normalization: newValue.normalization ?? defaultNormalization
+      }
+      cb(safeValue)
+    }
+  })
 }
 
 const MAX_LENGTH = 200
@@ -49,7 +67,7 @@ export const LatexQueue = {
 
 export async function getPattern() {
   const pattern = await storage.getItem<PatternCache>(PATTERN)
-  return pattern && Object.keys(pattern).length ? pattern: {data: [], time: Date.now()}
+  return pattern && Object.keys(pattern).length ? pattern : { data: [], time: Date.now() }
 }
 
 export async function setPattern(data: Pattern[]) {

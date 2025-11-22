@@ -18,10 +18,69 @@ export type Rule = {
 }
 
 export const rules: Record<string, Rule> = {
+  //arxiv的元素结构如下
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12', 'https://arxiv.org/html/2412.11563v1'],
-    selectorList: ['.ltx_equation .ltx_Math', 'math.ltx_math_unparsed', 'math.ltx_Math'],
+    selectorList: ['.ltx_equation .ltx_Math', 'math.ltx_math_unparsed', 'math.ltx_Math', 'ltx_math'],
     parse: async (el: HTMLElement) => el.getAttribute('alttext'),
+    pre,
+    post,
+  },
+  // immersive translate注入的元素如下，从外到内嵌套分别是：1. <font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner">; 1.1 <tex-math>; 1.1.1 <tex-math>的子节点<div class="MathJax_Display"> 用于displaystyle，也就是单独成行的公式 1.1.2 <tex-math>的子节点<span class="MathJax">，用于行内公式。公式代码在1.1.1和1.1.2 同id的第一个的父节点的兄弟节点<script>里。如何解析？
+  immersive_translate: {
+    testUrl: [],
+    selectorList: [
+      '.immersive-translate-target-inner tex-math .MathJax_Display',
+      '.immersive-translate-target-inner tex-math .MathJax',
+      '.immersive-translate-target-inner .MathJax_SVG',
+    ],
+    parse: async (el: HTMLElement) => {
+      const targetId = el.id;
+      console.log('👉 目标 ID:', targetId);
+      if (!targetId) {
+        console.warn('❌ 没有 ID，无法回溯原始公式', el);
+        return null;
+      }
+      // 在整个文档中查找具有相同 ID 的元素
+      const candidates = document.querySelectorAll(`#${CSS.escape(targetId)}`);
+      console.log(`🔍 找到 ${candidates.length} 个同 ID 候选元素`);
+      if (!candidates.length) return null;
+
+      for (const candidate of candidates) {
+        // 3.1 跳过自己 (即跳过 tex-math 内部的这个克隆体)
+        // if (el.contains(candidate)) {
+        //   continue;
+        // }
+        if (el.isConnected && el === candidate) {
+          console.log('  跳过自己');
+          continue;
+        }
+        // 3.2 检查这个候选元素的“真身”环境
+        // 目标结构: <div class="MathJax_Display"><span id="目标ID">...</span></div> <script>...</script>  && (parent.classList.contains('MathJax_Display') || parent.classList.contains('MathJax'))
+        const parent = candidate.parentElement;
+        if (parent) {
+          console.log('   -> 找到疑似真身父级:', parent.tagName, parent.className);
+          // 4. 核心逻辑：公式代码在父节点的兄弟 script 标签里
+          if (parent.classList.contains('MathJax_Display')) {
+            const script = parent.parentElement?.querySelector('script');
+            if (script && script.tagName === 'SCRIPT' && script.getAttribute('type')?.includes('math/tex')) {
+              console.log('✅ 成功找到 Script:', script);
+              return script.textContent;
+            }
+          }
+          else {
+            const script = parent.querySelector('script');
+            // console.log('   -> script parent:', script.tagName, script.className);
+            if (script && script.tagName === 'SCRIPT' && script.getAttribute('type')?.includes('math/tex')) {
+              console.log('✅ 成功找到 Script:', script);
+              return script.textContent;
+            }
+          }
+        }
+      }
+      console.warn('❌ 遍历结束，未找到匹配的 Script');
+      return null;
+    },
     pre,
     post,
   },
@@ -34,6 +93,11 @@ export const rules: Record<string, Rule> = {
       'https://math.stackexchange.com/questions/4819923/solving-the-system-frac1x-frac12y-x23y23x2y2-frac1',
     ],
     selectorList: [
+      // '.MathJax_SVG_Display',
+      // '.MathJax_SVG',
+      // '.MathJax_Display',
+      // '.MathJax',
+      '.mathjax-tex',
       '.MathJax_Preview + .MathJax',
       '.MathJax_Preview + .MathJax_SVG_Display',
       '.MathJax_Preview + .MathJax_SVG',
@@ -42,23 +106,115 @@ export const rules: Record<string, Rule> = {
       '.MathJax_Preview + .mjx-chtml',
     ],
     parse: async (el: HTMLElement) => {
-      const scriptEl = el.nextElementSibling as HTMLScriptElement
-      if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/')) return
-      // https://www.sciencedirect.com/science/article/pii/S2095809919302279
+      // 辅助函数：判断是否是有效的 Math 脚本
+      const isValidScript = (node: Element | null | undefined) => {
+        return node && node.tagName === 'SCRIPT' && node.getAttribute('type')?.includes('math/');
+      };
+
+      // 1. 卫语句：检查这个元素是否在沉浸式翻译容器内
+      // 如果找到了父级容器，说明这个元素归 'immersive_translate' 规则管
+      if (el.closest('.immersive-translate-target-inner')) {
+        return; // 直接退出，不处理，也不报错
+      }
+
+      // 策略 1: 标准 MathJax，Script 是当前元素的下一个兄弟
+      let scriptEl = el.nextElementSibling as HTMLScriptElement;
+
+      // 策略 2: Nature 变体，Script 是“父元素”的下一个兄弟
+      // 场景: el(.MathJax_SVG) -> parent(.MathJax_SVG_Display) -> nextSibling(Script)
+      if (!isValidScript(scriptEl)) {
+        scriptEl = el.parentElement?.nextElementSibling as HTMLScriptElement;
+      }
+
+      // 策略 3: 深度嵌套/包装器结构 (兜底)
+      // 尝试在更外层的 .mathjax-tex 容器中查找
+      if (!isValidScript(scriptEl)) {
+        const wrapper = el.closest('.mathjax-tex') || el.parentElement?.parentElement;
+        if (wrapper) {
+          scriptEl = wrapper.querySelector('script[type^="math/tex"]') as HTMLScriptElement;
+        }
+      }
+
+      // 最终检查
+      if (!isValidScript(scriptEl)) {
+        return null;
+      }
+
+      // 处理 MathML
       if (scriptEl.type.includes('math/mml')) {
         return initMathml().then(() => {
-          const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
-          return latexContent
-        })
+          return window.Mathml2latex.convert(scriptEl.innerHTML);
+        });
       }
-      return scriptEl.textContent
+
+      // 返回 LaTeX 文本
+      return scriptEl.textContent;
+
+      //Debug1
+
+      // console.log('--- Latex Copy Debug Start ---');
+      // console.log('1. 用户点击的元素:', el);
+      // // 策略 1: 尝试获取紧邻的下一个兄弟节点
+      // let scriptEl = el.nextElementSibling as HTMLScriptElement
+
+      // // 策略 2: 父容器查找 (Nature 专用)
+      // if (!scriptEl || scriptEl.tagName !== 'SCRIPT') {
+      //   console.log('2. 兄弟节点未找到 Script，尝试在父容器中查找...');
+      //   // 打印父元素看看结构
+      //   console.log('   父元素:', el.parentElement);
+      //   scriptEl = el.parentElement?.querySelector('script[type^="math/tex"]') as HTMLScriptElement
+      // }
+
+      // console.log('3. 最终找到的 Script 元素:', scriptEl);
+
+      // if (!scriptEl) {
+      //   console.error('❌ 未找到任何 Script 标签，解析终止');
+      //   return null;
+      // }
+
+      // console.log('4. Script 类型:', scriptEl.type);
+      // const rawContent = scriptEl.innerHTML || scriptEl.textContent || '';
+      // console.log('5. Script 原始内容 (Raw):', JSON.stringify(rawContent));
+
+      // if (!scriptEl.type.includes('math/')) {
+      //   console.error('❌ Script 类型不符合 math/ 要求');
+      //   return null
+      // }
+
+      // // MathML 特殊处理
+      // if (scriptEl.type.includes('math/mml')) {
+      //   console.log('   检测到 MathML，正在转换...');
+      //   return initMathml().then(() => {
+      //     const latex = window.Mathml2latex.convert(scriptEl.innerHTML)
+      //     console.log('   MathML 转换结果:', latex);
+      //     return latex;
+      //   })
+      // }
+
+      // console.log('6. 返回的 LaTeX 内容:', rawContent);
+      // console.log('--- Latex Copy Debug End ---');
+      // return rawContent
+
+      // Original
+
+      // const scriptEl = el.nextElementSibling as HTMLScriptElement
+      // if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/')) return
+      // // https://www.sciencedirect.com/science/article/pii/S2095809919302279
+      // if (scriptEl.type.includes('math/mml')) {
+      //   return initMathml().then(() => {
+      //     const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
+      //     return latexContent
+      //   })
+      // }
+      // // 对于 math/tex 和 math/tex; mode=display，textContent 就是纯 LaTeX 代码
+      // return scriptEl.textContent
     },
     pre,
     post,
   },
   math_ml: {
     testUrl: [],
-    selectorList: ['.katex', '.maruku-mathml'],
+    selectorList: ['.katex', '.maruku-mathml', 'katex-display', 'display-math'],
     parse: async (el: HTMLElement) => {
       const annotationEl =
         el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
