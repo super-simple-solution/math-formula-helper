@@ -73,6 +73,12 @@ export const rules: Record<string, Rule> = {
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding')?.includes('application/x-tex')) {
         latexContent = annotationEl.textContent as string
+      } else if (host.includes('gemini.google')) {
+        const geminiTexEl = el
+          .closest(
+            '.math-block,.math-inline',
+          )
+        latexContent = geminiTexEl?.getAttribute('data-math') as string
       } else if (host.includes('mathsolver.microsoft')) {
         const microsoftTexEl = el
           .closest(

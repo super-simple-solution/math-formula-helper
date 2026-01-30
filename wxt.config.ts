@@ -7,7 +7,7 @@ export default defineConfig({
   manifest: {
     permissions: ['scripting', 'storage', 'sidePanel', 'tabs'],
     name: 'LaTeX Copy',
-    version: '0.3.0',
+    version: '0.3.1',
     description: 'Make copying LaTeX effortless and efficient!',
     host_permissions: ['<all_urls>'],
     action: {
