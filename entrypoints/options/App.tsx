@@ -33,7 +33,7 @@ function App() {
             <TabsList className="mt-4 flex flex-col justify-start gap-1">
               {siderMenuList.map((item) => (
                 <TabsTrigger
-                  className={`!shadow-none w-full justify-start rounded-xl py-3 hover:bg-slate-100 ${item.value === curTab ? '!bg-green-50 !text-green-500' : ''}`}
+                  className={`shadow-none! w-full justify-start rounded-xl py-3 hover:bg-slate-100 ${item.value === curTab ? '!bg-green-50 !text-green-500' : ''}`}
                   key={item.value}
                   value={item.value}
                 >
