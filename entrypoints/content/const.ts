@@ -137,7 +137,9 @@ export const rules: Record<string, Rule> = {
     testUrl: [],
     selectorList: ['mjx-container.MathJax', 'math'],
     parse: async (el: HTMLElement) => {
-      const mathEl = el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
+      const mathElTagList = ['math', 'mjx-math']
+      // https://machinelearningmastery.com/building-transformer-models-from-scratch-with-pytorch-10-day-mini-course/
+      const mathEl = mathElTagList.includes(el.tagName.toLowerCase()) ? el : el.querySelector(mathElTagList.join(','))
       // svg with no content
       if (!mathEl) {
         const svgEl = el.querySelector('svg')
