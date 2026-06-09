@@ -166,6 +166,7 @@ export const rules: Record<string, Rule> = {
     selectorList: [
       '.mwe-math-element',
       'img[class*="tex-img"]',
+      'img[class*="mwe-math"]',
       'img[class*="latex"]',
       'img[class*="formula"]',
       '[data-attrid^="variable"] img',
