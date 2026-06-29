@@ -1,13 +1,18 @@
-import {browser} from "wxt/browser"
+import { browser } from 'wxt/browser'
 
-type GreetingType = 'insert-css' | 'get-active-tab' | 'get-pattern'
+type GreetingType = 'insert-css' | 'get-active-tab' | 'get-pattern' | 'get-mathjax-source'
 
 export type BrowserRequest = {
-  greeting: GreetingType,
+  greeting: GreetingType
   data?: object | any[]
 }
 
-export type handlerParams = {data: BrowserRequest['data'], sendResponse: (message: unknown) => void, tabId?: number}
+export type handlerParams = {
+  data: BrowserRequest['data']
+  sendResponse: (message: unknown) => void
+  tabId?: number
+  frameId?: number
+}
 
 export type BrowserHandler = Record<GreetingType, (params: handlerParams) => void>
 
@@ -16,10 +21,14 @@ export function initEventHandler(contentReq: Partial<BrowserHandler>) {
     const browserRequest = request as BrowserRequest
     const data = browserRequest.data
     const tabId = sender.tab?.id
+    const frameId = sender.frameId
     const handler = contentReq[browserRequest.greeting]
     if (handler) {
       handler({
-        data, sendResponse, tabId
+        data,
+        sendResponse,
+        tabId,
+        frameId,
       })
     }
     return true

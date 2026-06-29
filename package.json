@@ -8,7 +8,8 @@
     "dev": "wxt",
     "build": "wxt build",
     "zip": "wxt zip",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "verify:optica": "pnpm build && node scripts/verify-optica.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -51,16 +52,5 @@
     "vite-plugin-biome": "^1.0.12",
     "wxt": "0.20.11"
   },
-  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "dtrace-provider",
-      "esbuild",
-      "spawn-sync"
-    ],
-    "ignoredBuiltDependencies": [
-      "@biomejs/biome",
-      "@tailwindcss/oxide"
-    ]
-  }
+  "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af"
 }

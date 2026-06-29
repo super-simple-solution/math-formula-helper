@@ -168,7 +168,7 @@ export function Feedback() {
                         />
                       </div>
                       {imageUrls.map((image, index) => (
-                        <div key={index} className="relative h-20 w-20 rounded-md">
+                        <div key={image} className="relative h-20 w-20 rounded-md">
                           <img src={image} alt="Preview" className="h-20 w-20 rounded-md" />
                           <div
                             onClick={() => handleRemoveImage(index)}

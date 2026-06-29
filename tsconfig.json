@@ -4,10 +4,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
+  "exclude": ["backups", "dist", "node_modules"],
   "extends": "./.wxt/tsconfig.json"
 }

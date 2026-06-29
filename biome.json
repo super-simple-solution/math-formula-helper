@@ -1,6 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": { "enabled": true },
+  "organizeImports": {
+    "enabled": true
+  },
   "files": {
     "ignore": [
       "node_modules",
@@ -10,6 +12,10 @@
       "public",
       "tsconfig.*",
       ".vscode",
+      ".wxt",
+      ".tmp-chrome-verify*",
+      "backups",
+      "package.json",
       ".nx",
       "**/components/ui/*.tsx"
     ]

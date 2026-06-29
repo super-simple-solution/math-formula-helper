@@ -1,6 +1,14 @@
 import { getEle } from '@/lib'
 import delay from 'delay'
-import { addCopiedStyle, copyLatex, copyLatexAsImage, initMathml, svgToImage } from './util'
+import {
+  addCopiedStyle,
+  cleanMathml,
+  copyLatex,
+  copyLatexAsImage,
+  getMathJaxSourceFromPage,
+  initMathml,
+  svgToImage,
+} from './util'
 
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
@@ -21,7 +29,12 @@ export const rules: Record<string, Rule> = {
   //arxiv的元素结构如下
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12', 'https://arxiv.org/html/2412.11563v1'],
-    selectorList: ['.ltx_equation .ltx_Math', 'math.ltx_math_unparsed', 'math.ltx_Math', 'ltx_math'],
+    selectorList: [
+      '.ltx_equation .ltx_Math',
+      'math.ltx_math_unparsed',
+      'math.ltx_Math',
+      'ltx_math',
+    ],
     parse: async (el: HTMLElement) => el.getAttribute('alttext'),
     pre,
     post,
@@ -35,16 +48,13 @@ export const rules: Record<string, Rule> = {
       '.immersive-translate-target-inner .MathJax_SVG',
     ],
     parse: async (el: HTMLElement) => {
-      const targetId = el.id;
-      console.log('👉 目标 ID:', targetId);
+      const targetId = el.id
       if (!targetId) {
-        console.warn('❌ 没有 ID，无法回溯原始公式', el);
-        return null;
+        return null
       }
       // 在整个文档中查找具有相同 ID 的元素
-      const candidates = document.querySelectorAll(`#${CSS.escape(targetId)}`);
-      console.log(`🔍 找到 ${candidates.length} 个同 ID 候选元素`);
-      if (!candidates.length) return null;
+      const candidates = document.querySelectorAll(`#${CSS.escape(targetId)}`)
+      if (!candidates.length) return null
 
       for (const candidate of candidates) {
         // 3.1 跳过自己 (即跳过 tex-math 内部的这个克隆体)
@@ -52,34 +62,35 @@ export const rules: Record<string, Rule> = {
         //   continue;
         // }
         if (el.isConnected && el === candidate) {
-          console.log('  跳过自己');
-          continue;
+          continue
         }
         // 3.2 检查这个候选元素的“真身”环境
         // 目标结构: <div class="MathJax_Display"><span id="目标ID">...</span></div> <script>...</script>  && (parent.classList.contains('MathJax_Display') || parent.classList.contains('MathJax'))
-        const parent = candidate.parentElement;
+        const parent = candidate.parentElement
         if (parent) {
-          console.log('   -> 找到疑似真身父级:', parent.tagName, parent.className);
           // 4. 核心逻辑：公式代码在父节点的兄弟 script 标签里
           if (parent.classList.contains('MathJax_Display')) {
-            const script = parent.parentElement?.querySelector('script');
-            if (script && script.tagName === 'SCRIPT' && script.getAttribute('type')?.includes('math/tex')) {
-              console.log('✅ 成功找到 Script:', script);
-              return script.textContent;
+            const script = parent.parentElement?.querySelector('script')
+            if (
+              script &&
+              script.tagName === 'SCRIPT' &&
+              script.getAttribute('type')?.includes('math/tex')
+            ) {
+              return script.textContent
             }
-          }
-          else {
-            const script = parent.querySelector('script');
-            // console.log('   -> script parent:', script.tagName, script.className);
-            if (script && script.tagName === 'SCRIPT' && script.getAttribute('type')?.includes('math/tex')) {
-              console.log('✅ 成功找到 Script:', script);
-              return script.textContent;
+          } else {
+            const script = parent.querySelector('script')
+            if (
+              script &&
+              script.tagName === 'SCRIPT' &&
+              script.getAttribute('type')?.includes('math/tex')
+            ) {
+              return script.textContent
             }
           }
         }
       }
-      console.warn('❌ 遍历结束，未找到匹配的 Script');
-      return null;
+      return null
     },
     pre,
     post,
@@ -93,152 +104,80 @@ export const rules: Record<string, Rule> = {
       'https://math.stackexchange.com/questions/4819923/solving-the-system-frac1x-frac12y-x23y23x2y2-frac1',
     ],
     selectorList: [
-      // '.MathJax_SVG_Display',
-      // '.MathJax_SVG',
-      // '.MathJax_Display',
-      // '.MathJax',
       '.mathjax-tex',
       '.MathJax_Preview + .MathJax',
       '.MathJax_Preview + .MathJax_SVG_Display',
       '.MathJax_Preview + .MathJax_SVG',
       '.MathJax_Preview + .MathJax_Display',
+      'tex-math + .MathJax_Display',
       '.MathJax_Preview + .MathJax_CHTML',
       '.MathJax_Preview + .mjx-chtml',
+      '.MathJax',
+      '.MathJax_Display',
+      '.MathJax_SVG_Display',
+      '.MathJax_SVG',
+      '.MathJax_CHTML',
+      '.mjx-chtml',
+      'mjx-container.MathJax',
     ],
     parse: async (el: HTMLElement) => {
-      // 辅助函数：判断是否是有效的 Math 脚本
-      const isValidScript = (node: Element | null | undefined) => {
-        return node && node.tagName === 'SCRIPT' && node.getAttribute('type')?.includes('math/');
-      };
+      if (el.closest('.immersive-translate-target-inner')) return null
 
-      // 1. 卫语句：检查这个元素是否在沉浸式翻译容器内
-      // 如果找到了父级容器，说明这个元素归 'immersive_translate' 规则管
-      if (el.closest('.immersive-translate-target-inner')) {
-        return; // 直接退出，不处理，也不报错
-      }
-
-      // 策略 1: 标准 MathJax，Script 是当前元素的下一个兄弟
-      let scriptEl = el.nextElementSibling as HTMLScriptElement;
-
-      // 策略 2: Nature 变体，Script 是“父元素”的下一个兄弟
-      // 场景: el(.MathJax_SVG) -> parent(.MathJax_SVG_Display) -> nextSibling(Script)
-      if (!isValidScript(scriptEl)) {
-        scriptEl = el.parentElement?.nextElementSibling as HTMLScriptElement;
-      }
-
-      // 策略 3: 深度嵌套/包装器结构 (兜底)
-      // 尝试在更外层的 .mathjax-tex 容器中查找
-      if (!isValidScript(scriptEl)) {
-        const wrapper = el.closest('.mathjax-tex') || el.parentElement?.parentElement;
-        if (wrapper) {
-          scriptEl = wrapper.querySelector('script[type^="math/tex"]') as HTMLScriptElement;
+      const scriptEl = findMathScript(el)
+      if (scriptEl) {
+        if (scriptEl.type.includes('math/mml')) {
+          return mathmlToLatex(scriptEl.innerHTML || scriptEl.textContent || '')
         }
+        return scriptEl.textContent
       }
 
-      // 最终检查
-      if (!isValidScript(scriptEl)) {
-        return null;
-      }
+      const dataMath =
+        el.getAttribute('data-math') ||
+        el.getAttribute('data-latex') ||
+        el.closest('[data-math]')?.getAttribute('data-math') ||
+        el.closest('[data-latex]')?.getAttribute('data-latex')
+      if (dataMath) return dataMath
 
-      // 处理 MathML
-      if (scriptEl.type.includes('math/mml')) {
-        return initMathml().then(() => {
-          return window.Mathml2latex.convert(scriptEl.innerHTML);
-        });
-      }
+      const targetId = ensureElementId(el)
+      const apiResult = targetId ? await getMathJaxSourceFromPage(targetId) : null
+      if (apiResult) return normalizeMathJaxSource(apiResult)
 
-      // 返回 LaTeX 文本
-      return scriptEl.textContent;
-
-      //Debug1
-
-      // console.log('--- Latex Copy Debug Start ---');
-      // console.log('1. 用户点击的元素:', el);
-      // // 策略 1: 尝试获取紧邻的下一个兄弟节点
-      // let scriptEl = el.nextElementSibling as HTMLScriptElement
-
-      // // 策略 2: 父容器查找 (Nature 专用)
-      // if (!scriptEl || scriptEl.tagName !== 'SCRIPT') {
-      //   console.log('2. 兄弟节点未找到 Script，尝试在父容器中查找...');
-      //   // 打印父元素看看结构
-      //   console.log('   父元素:', el.parentElement);
-      //   scriptEl = el.parentElement?.querySelector('script[type^="math/tex"]') as HTMLScriptElement
-      // }
-
-      // console.log('3. 最终找到的 Script 元素:', scriptEl);
-
-      // if (!scriptEl) {
-      //   console.error('❌ 未找到任何 Script 标签，解析终止');
-      //   return null;
-      // }
-
-      // console.log('4. Script 类型:', scriptEl.type);
-      // const rawContent = scriptEl.innerHTML || scriptEl.textContent || '';
-      // console.log('5. Script 原始内容 (Raw):', JSON.stringify(rawContent));
-
-      // if (!scriptEl.type.includes('math/')) {
-      //   console.error('❌ Script 类型不符合 math/ 要求');
-      //   return null
-      // }
-
-      // // MathML 特殊处理
-      // if (scriptEl.type.includes('math/mml')) {
-      //   console.log('   检测到 MathML，正在转换...');
-      //   return initMathml().then(() => {
-      //     const latex = window.Mathml2latex.convert(scriptEl.innerHTML)
-      //     console.log('   MathML 转换结果:', latex);
-      //     return latex;
-      //   })
-      // }
-
-      // console.log('6. 返回的 LaTeX 内容:', rawContent);
-      // console.log('--- Latex Copy Debug End ---');
-      // return rawContent
-
-      // Original
-
-      // const scriptEl = el.nextElementSibling as HTMLScriptElement
-      // if (!scriptEl || scriptEl.tagName !== 'SCRIPT' || !scriptEl.type.includes('math/')) return
-      // // https://www.sciencedirect.com/science/article/pii/S2095809919302279
-      // if (scriptEl.type.includes('math/mml')) {
-      //   return initMathml().then(() => {
-      //     const latexContent = window.Mathml2latex.convert(scriptEl.innerHTML)
-      //     return latexContent
-      //   })
-      // }
-      // // 对于 math/tex 和 math/tex; mode=display，textContent 就是纯 LaTeX 代码
-      // return scriptEl.textContent
+      return (
+        el.getAttribute('alt') ||
+        el.querySelector('img')?.getAttribute('alt') ||
+        el.getAttribute('aria-label') ||
+        null
+      )
     },
     pre,
     post,
   },
   math_ml: {
     testUrl: [],
-    selectorList: ['.katex', '.maruku-mathml', 'katex-display', 'display-math'],
+    selectorList: ['.katex', '.katex-display', '.maruku-mathml', '.display-math', 'MJX-TEX'],
     parse: async (el: HTMLElement) => {
       const annotationEl =
         el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
 
       const mathTexEl = el.querySelector('.katex-mathml') || el.querySelector('.katex-html')
       const mathTexElDomainList = ['chat.deepseek', 'csdn.net', 'bananaspace.org']
-      // TODO: 'moonshot.cn', 'yiyan.baidu.com', 'yuanbao.tencent.com'无法解析'.katex-html'里的内容; 因katex output为htmlonly https://katex.org/docs/options.html
       const mathHTMLDomainList = ['moonshot.cn', 'yuanbao.tencent.com']
 
       const host = location.hostname
-      // 获取数学公式dom及属性
       let latexContent = ''
       if (annotationEl?.getAttribute('encoding')?.includes('application/x-tex')) {
         latexContent = annotationEl.textContent as string
-      } else if (host.includes('mathsolver.microsoft')) {
+      } else if (pageHostMatches('gemini.google')) {
+        const geminiTexEl = el.closest('.math-block,.math-inline')
+        latexContent = geminiTexEl?.getAttribute('data-math') as string
+      } else if (pageHostMatches('mathsolver.microsoft')) {
         const microsoftTexEl = el
           .closest(
             '[class^="Answer_resultsAnswer"]:has(.hidden),[class^="Step_stepExpression"]:has(.hidden)',
           )
           ?.querySelector('.hidden')
-        // https://mathsolver.microsoft.com/en/solve-problem/4%20%60sin%20%60theta%20%60cos%20%60theta%20%3D%202%20%60sin%20%60theta
         latexContent = microsoftTexEl?.textContent as string
-      } else if (mathHTMLDomainList.find((domain) => host.includes(domain))) {
-        // 当前聊天泡泡
+      } else if (mathHTMLDomainList.find((domain) => pageHostMatches(domain))) {
         const chatBubbleContainer = el.closest(
           '.agent-chat__list__item, .chat-content-item, .dialogue_card_item',
         )
@@ -268,10 +207,9 @@ export const rules: Record<string, Rule> = {
           }
         }
       } else if (mathTexEl) {
-        if (mathTexElDomainList.find((domain) => host.includes(domain))) {
-          latexContent = katexContentExtra(mathTexEl.textContent as string)
+        if (mathTexElDomainList.find((domain) => pageHostMatches(domain))) {
+          latexContent = katexHtmlToLatex(el) || katexContentExtra(mathTexEl.textContent as string)
         } else if (host.includes('leetcode.')) {
-          // https://leetcode.cn/problems/single-number/solutions/2481594/li-yong-yi-huo-de-xing-zhi-fu-ti-dan-pyt-oizc/?envType=study-plan-v2&envId=top-100-liked
           const lastChild = mathTexEl.lastChild
           if (lastChild?.nodeType === 3) {
             latexContent = lastChild.textContent as string
@@ -285,22 +223,32 @@ export const rules: Record<string, Rule> = {
   },
   math_jax_html: {
     testUrl: [],
-    selectorList: ['mjx-container.MathJax', 'math'],
+    selectorList: [
+      'mjx-container.MathJax',
+      'mjx-assistive-mml math',
+      'math',
+      'STX-N',
+      '.STX-N',
+      'article-fulltext-disp-eq',
+      '.article-fulltext-disp-eq',
+      'inline-formula',
+      '.inline-formula',
+    ],
     parse: async (el: HTMLElement) => {
       const mathEl = el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
-      // svg with no content
-      if (!mathEl) {
-        const svgEl = el.querySelector('svg')
-        if (svgEl) {
-          // TODO: overlay, and convert image to latex
-          return svgToImage(svgEl)
-        }
-      } else {
-        return initMathml().then(() => {
-          const latexContent = window.Mathml2latex.convert(mathEl.outerHTML)
-          return latexContent
-        })
+      if (mathEl) {
+        return mathmlToLatex(mathEl.outerHTML)
       }
+
+      const targetId = ensureElementId(el)
+      const apiResult = targetId ? await getMathJaxSourceFromPage(targetId) : null
+      if (apiResult) return normalizeMathJaxSource(apiResult)
+
+      const svgEl = el.querySelector('svg')
+      if (svgEl) {
+        return svgToImage(svgEl)
+      }
+      return null
     },
     pre,
     post,
@@ -314,6 +262,7 @@ export const rules: Record<string, Rule> = {
     selectorList: [
       '.mwe-math-element',
       'img[class*="tex-img"]',
+      'img[class*="mwe-math"]',
       'img[class*="latex"]',
       'img[class*="formula"]',
       '[data-attrid^="variable"] img',
@@ -321,9 +270,8 @@ export const rules: Record<string, Rule> = {
       'div[data-type="formula"]:has(img[dataset-id="formula"])',
     ],
     parse: async (el: HTMLElement) => {
-      const host = location.hostname
       let latexContent = ''
-      if (host.includes('baike.')) {
+      if (pageHostMatches('baike.')) {
         latexContent = getEle('img[dataset-id="formula"]', el)?.getAttribute(
           'dataset-value',
         ) as string
@@ -358,6 +306,245 @@ export const rules: Record<string, Rule> = {
   },
 }
 
+function isMathScript(node: Element | null | undefined): node is HTMLScriptElement {
+  return node?.tagName === 'SCRIPT' && node.getAttribute('type')?.includes('math/') === true
+}
+
+function findMathScript(el: HTMLElement) {
+  const directSibling = el.nextElementSibling
+  if (isMathScript(directSibling)) return directSibling
+
+  const parentSibling = el.parentElement?.nextElementSibling
+  if (isMathScript(parentSibling)) return parentSibling
+
+  const wrapper = el.closest('.mathjax-tex') || el.parentElement?.parentElement || el.parentElement
+  const nestedScript = wrapper?.querySelector('script[type^="math/"]')
+  if (isMathScript(nestedScript)) return nestedScript
+
+  return null
+}
+
+async function normalizeMathJaxSource(source: string) {
+  const trimmedSource = source.trim()
+  if (trimmedSource.startsWith('<math')) {
+    return mathmlToLatex(trimmedSource)
+  }
+  return source
+}
+async function mathmlToLatex(mathml: string) {
+  await initMathml()
+  return window.Mathml2latex.convert(cleanMathml(mathml))
+}
+
+let cachedPageHosts: string[] | null = null
+
+function getPageHosts() {
+  if (cachedPageHosts) return cachedPageHosts
+
+  const hosts = new Set<string>()
+  if (location.hostname) hosts.add(location.hostname)
+
+  const urlCandidates = [
+    document.querySelector<HTMLLinkElement>('link[rel~="canonical"]')?.href,
+    document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content,
+    document.querySelector<HTMLMetaElement>('meta[name="twitter:url"]')?.content,
+  ]
+
+  for (const url of urlCandidates) {
+    try {
+      const host = url ? new URL(url).hostname : ''
+      if (host) hosts.add(host)
+    } catch {}
+  }
+
+  cachedPageHosts = Array.from(hosts)
+  return cachedPageHosts
+}
+
+function pageHostMatches(domain: string) {
+  return getPageHosts().some(
+    (host) => host === domain || host.endsWith(`.${domain}`) || host.includes(domain),
+  )
+}
+
+function katexHtmlToLatex(el: HTMLElement) {
+  const htmlEl = (
+    el.classList.contains('katex-html') ? el : el.querySelector('.katex-html')
+  ) as HTMLElement | null
+  if (!htmlEl) return ''
+  if (htmlEl.querySelector('.mfrac,.sqrt,.mroot,.accent')) return ''
+
+  return cleanKatexLatex(parseKatexChildren(htmlEl))
+}
+
+function parseKatexChildren(parent: HTMLElement) {
+  let latex = ''
+  let previousRenderable: HTMLElement | null = null
+
+  for (const child of Array.from(parent.children) as HTMLElement[]) {
+    if (isIgnoredKatexNode(child)) continue
+
+    if (child.classList.contains('msupsub')) {
+      const scripts = parseKatexScripts(child, previousRenderable)
+      if (scripts.sup) latex += `^{${scripts.sup}}`
+      if (scripts.sub) latex += `_{${scripts.sub}}`
+      continue
+    }
+
+    const piece = parseKatexNode(child)
+    if (!piece) continue
+
+    latex += piece
+    previousRenderable = child
+  }
+
+  return latex || parseKatexText(parent.textContent || '')
+}
+
+function parseKatexNode(el: HTMLElement): string {
+  if (isIgnoredKatexNode(el)) return ''
+
+  if (el.classList.contains('mspace')) return parseKatexSpace(el)
+
+  if (el.classList.contains('mathbb')) {
+    return `\\mathbb{${parseKatexText(el.textContent || '')}}`
+  }
+
+  if (el.classList.contains('mathcal')) {
+    return `\\mathcal{${parseKatexText(el.textContent || '')}}`
+  }
+
+  if (el.classList.contains('mathrm')) {
+    return `\\mathrm{${parseKatexText(el.textContent || '')}}`
+  }
+
+  if (el.children.length) {
+    return parseKatexChildren(el)
+  }
+
+  return parseKatexText(el.textContent || '')
+}
+
+function parseKatexScripts(el: HTMLElement, reference: HTMLElement | null) {
+  const scripts: { sup: string; sub: string } = { sup: '', sub: '' }
+  const referenceRect = reference?.getBoundingClientRect()
+  const referenceCenter =
+    referenceRect && referenceRect.height > 0 ? referenceRect.top + referenceRect.height / 2 : null
+
+  const candidates = Array.from(
+    el.querySelectorAll<HTMLElement>('.vlist-r > .vlist > span'),
+  ).filter((candidate) => {
+    const text = (candidate.textContent || '').replaceAll('\u200b', '').trim()
+    return text.length > 0
+  })
+
+  for (const candidate of candidates) {
+    const contentEl = Array.from(candidate.children).find(
+      (child) => !(child as HTMLElement).classList.contains('pstrut'),
+    ) as HTMLElement | undefined
+    const latex = cleanKatexLatex(
+      contentEl ? parseKatexNode(contentEl) : parseKatexText(candidate.textContent || ''),
+    )
+    if (!latex) continue
+
+    const candidateRect = (contentEl || candidate).getBoundingClientRect()
+    const candidateCenter =
+      candidateRect.height > 0 ? candidateRect.top + candidateRect.height / 2 : null
+    const isSup =
+      referenceCenter !== null && candidateCenter !== null ? candidateCenter < referenceCenter : false
+
+    if (isSup) {
+      scripts.sup = latex
+    } else {
+      scripts.sub = latex
+    }
+  }
+
+  return scripts
+}
+
+function isIgnoredKatexNode(el: HTMLElement) {
+  return (
+    el.classList.contains('strut') ||
+    el.classList.contains('pstrut') ||
+    el.classList.contains('vlist-s') ||
+    el.classList.contains('frac-line') ||
+    el.getAttribute('aria-hidden') === 'true'
+  )
+}
+
+function parseKatexSpace(el: HTMLElement) {
+  const rawStyle = el.getAttribute('style') || ''
+  if (/margin-right:\s*1(?:\.0+)?em/.test(rawStyle)) return '\\quad '
+  if (/margin-right:\s*2(?:\.0+)?em/.test(rawStyle)) return '\\qquad '
+  return ''
+}
+
+function parseKatexText(text: string) {
+  const symbolMap: Record<string, string> = {
+    '\u200b': '',
+    '−': '-',
+    '…': '\\ldots',
+    '⋯': '\\cdots',
+    '∙': '\\bullet',
+    '·': '\\cdot',
+    '×': '\\times',
+    '⊗': '\\otimes',
+    '⊕': '\\oplus',
+    '→': '\\to',
+    '←': '\\leftarrow',
+    '↦': '\\mapsto',
+    '≅': '\\cong',
+    '≈': '\\approx',
+    '∼': '\\sim',
+    '≤': '\\le',
+    '≥': '\\ge',
+    '∈': '\\in',
+    '∉': '\\notin',
+    '⊂': '\\subset',
+    '⊆': '\\subseteq',
+    '∪': '\\cup',
+    '∩': '\\cap',
+    '∅': '\\emptyset',
+    '∞': '\\infty',
+    'ℤ': '\\mathbb{Z}',
+    'ℚ': '\\mathbb{Q}',
+    'ℝ': '\\mathbb{R}',
+    'ℂ': '\\mathbb{C}',
+    'α': '\\alpha',
+    'β': '\\beta',
+    'γ': '\\gamma',
+    'δ': '\\delta',
+    'ε': '\\epsilon',
+    'θ': '\\theta',
+    'λ': '\\lambda',
+    'μ': '\\mu',
+    'π': '\\pi',
+    'σ': '\\sigma',
+    'φ': '\\phi',
+    'ω': '\\omega',
+  }
+
+  return Array.from(text)
+    .map((char) => symbolMap[char] || char)
+    .join('')
+}
+
+function cleanKatexLatex(latex: string) {
+  return latex
+    .replaceAll('\u200b', '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,;:)])/g, '$1')
+    .replace(/([([])\s+/g, '$1')
+    .trim()
+}
+
+function ensureElementId(el: HTMLElement) {
+  if (el.id) return el.id
+  if (el.parentElement?.id) return el.parentElement.id
+  el.id = `sss-math-${crypto.randomUUID()}`
+  return el.id
+}
 function pre<T extends string | Blob>(content: T): T {
   if (typeof content === 'string') {
     return latexRefine(content) as T // 处理 string 类型

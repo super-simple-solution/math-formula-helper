@@ -4,7 +4,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { sendBrowserMessage } from '@/lib/extension-action'
-import { LatexSymbol, latexFormat } from '@/lib/latex'
+import { LatexSymbol, defaultNormalization, defaultOutputProfile, latexFormat } from '@/lib/latex'
 import {
   type LatexHistory,
   LatexQueue,
@@ -16,7 +16,6 @@ import { toast } from '@/lib/toast'
 import { Copy, FileStack, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import type { Tabs } from 'wxt/browser'
 import { Placeholder } from './components/placeholder'
 import { formInit } from './const'
 
@@ -42,7 +41,9 @@ function SiderPanelApp() {
 
   const preferRef = useRef<Prefer>({
     show_toast: false,
+    output_profile: defaultOutputProfile,
     format_signs: LatexSymbol.Inline,
+    normalization: defaultNormalization,
   })
 
   const form = useForm({
@@ -76,7 +77,7 @@ function SiderPanelApp() {
     return sendBrowserMessage({
       greeting: 'get-active-tab',
     }).then((tab) => {
-      const { url, id } = tab as Tabs.Tab
+      const { url, id } = tab as chrome.tabs.Tab
       if (url && id) {
         tabIdRef.current = id
         setTabUrl(urlParse(url))

@@ -1,5 +1,5 @@
 import type { Unwatch } from 'wxt/utils/storage'
-import { defaultLatexSymbol, defaultNormalization } from '../latex'
+import { defaultLatexSymbol, defaultNormalization, defaultOutputProfile } from '../latex'
 import type { LatexHistory, Pattern, PatternCache, Prefer } from './types'
 export type { Prefer, LatexHistory }
 
@@ -14,10 +14,11 @@ export async function getPreference() {
   // 核心修复：为 normalization 添加默认值 defaultNormalization
   const {
     show_toast = true,
+    output_profile = defaultOutputProfile,
     format_signs = defaultLatexSymbol,
-    normalization = defaultNormalization
+    normalization = defaultNormalization,
   } = prefer || {}
-  return { show_toast, format_signs, normalization }
+  return { show_toast, output_profile, format_signs, normalization }
 }
 
 export async function setPreference(data: Prefer) {
@@ -31,8 +32,9 @@ export function watchPreference(cb: (newValue: Prefer) => void): Unwatch {
     if (newValue) {
       const safeValue: Prefer = {
         show_toast: newValue.show_toast ?? true,
+        output_profile: newValue.output_profile ?? defaultOutputProfile,
         format_signs: newValue.format_signs ?? defaultLatexSymbol,
-        normalization: newValue.normalization ?? defaultNormalization
+        normalization: newValue.normalization ?? defaultNormalization,
       }
       cb(safeValue)
     }
@@ -53,7 +55,10 @@ export const LatexQueue = {
 
   async remove(idList: string[]) {
     const current = await this.getQueue()
-    await storage.setItem<LatexHistory[]>(LATEX_HISTORY, current.filter(item => !idList.includes(item.id)))
+    await storage.setItem<LatexHistory[]>(
+      LATEX_HISTORY,
+      current.filter((item) => !idList.includes(item.id)),
+    )
   },
 
   async clear(): Promise<void> {
@@ -62,7 +67,7 @@ export const LatexQueue = {
 
   watch(cb: (newValue: LatexHistory[]) => void): Unwatch {
     return storage.watch<LatexHistory[]>(LATEX_HISTORY, (newValue) => newValue && cb(newValue))
-  }
+  },
 }
 
 export async function getPattern() {
@@ -73,6 +78,6 @@ export async function getPattern() {
 export async function setPattern(data: Pattern[]) {
   await storage.setItem<PatternCache>(PATTERN, {
     time: Date.now(),
-    data
+    data,
   })
 }

@@ -1,7 +1,7 @@
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
-import { getPattern as getPatternStorage, setPattern } from "./storage"
-import type { Pattern, PatternCache } from "./storage/types"
+import { getPattern as getPatternStorage, setPattern } from './storage'
+import type { Pattern, PatternCache } from './storage/types'
 
 const SYNC_HOUR = 3
 
@@ -12,13 +12,20 @@ function getRule(patternList: Pattern[], domain: string) {
 }
 
 // 内存cache/storage/远端
-export async function getPattern({ forceUpdate = false, domain = '' }, cb?: (message: unknown) => void) {
+export async function getPattern(
+  { forceUpdate = false, domain = '' },
+  cb?: (message: unknown) => void,
+) {
   if (!patternCache.time) {
     patternCache = await getPatternStorage()
   }
   let ruleTarget = getRule(patternCache.data, domain)
   // 强制刷新/本地无缓存/缓存过期
-  if (forceUpdate || !patternCache.data?.length || Date.now() - patternCache.time >= 1000 * 60 * 60 * SYNC_HOUR) {
+  if (
+    forceUpdate ||
+    !patternCache.data?.length ||
+    Date.now() - patternCache.time >= 1000 * 60 * 60 * SYNC_HOUR
+  ) {
     // reset cache
     patternCache.time = 0
     const patternList = await patternApi()
@@ -49,8 +56,8 @@ async function patternApi(): Promise<Pattern[]> {
   //   },
   // }).then(res => res.json())
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase URL or Key is missing. Fallback to local rules.');
-    return [];
+    console.warn('Supabase URL or Key is missing. Fallback to local rules.')
+    return []
   }
 
   try {
@@ -61,16 +68,16 @@ async function patternApi(): Promise<Pattern[]> {
         Authorization: `Bearer ${supabaseKey}`,
         'Content-Type': 'application/json',
       },
-    });
+    })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    return await response.json();
+    return await response.json()
   } catch (error) {
     // 2. 捕获错误，防止从后台崩溃
-    console.error('Failed to fetch patterns:', error);
-    return [];
+    console.error('Failed to fetch patterns:', error)
+    return []
   }
 }
