@@ -4,7 +4,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { sendBrowserMessage } from '@/lib/extension-action'
-import { LatexSymbol, defaultNormalization, defaultOutputProfile, latexFormat } from '@/lib/latex'
+import {
+  defaultBracePolicy,
+  defaultEnvironmentPolicy,
+  defaultHistoryValueMode,
+  defaultLatexSymbol,
+  defaultNormalization,
+  defaultOutputProfile,
+  defaultTagPolicy,
+  HistoryValueMode,
+  latexFormat,
+} from '@/lib/latex'
 import {
   type LatexHistory,
   LatexQueue,
@@ -25,6 +35,23 @@ function urlParse(url: string) {
   return url.split('#')[0]
 }
 
+function getHistoryCopyContent(item: LatexHistory, prefer: Prefer) {
+  if (item.valueMode === HistoryValueMode.Formatted) return item.formatted || item.value
+
+  if (
+    prefer.history_value === HistoryValueMode.Formatted ||
+    prefer.history_value === HistoryValueMode.Both
+  ) {
+    return item.formatted || latexFormat(item.value, prefer)
+  }
+
+  return latexFormat(item.value, prefer)
+}
+
+function getHistoryPreview(item: LatexHistory) {
+  return item.formatted || item.value
+}
+
 async function copy(content: string) {
   await navigator.clipboard.writeText(content)
   toast({
@@ -41,9 +68,15 @@ function SiderPanelApp() {
 
   const preferRef = useRef<Prefer>({
     show_toast: false,
+    show_source_quality: true,
+    selection_copy: true,
+    history_value: defaultHistoryValueMode,
     output_profile: defaultOutputProfile,
-    format_signs: LatexSymbol.Inline,
+    format_signs: defaultLatexSymbol,
     normalization: defaultNormalization,
+    tag_policy: defaultTagPolicy,
+    environment_policy: defaultEnvironmentPolicy,
+    brace_policy: defaultBracePolicy,
   })
 
   const form = useForm({
@@ -61,8 +94,7 @@ function SiderPanelApp() {
     if (!curMapRef.current) return ''
     const contentList = idList.map((id) => {
       if (curMapRef.current[id]) {
-        curMapRef.current[id].value
-        return latexFormat(curMapRef.current[id].value, preferRef.current)
+        return getHistoryCopyContent(curMapRef.current[id], preferRef.current)
       }
       return ''
     })
@@ -234,7 +266,13 @@ function SiderPanelApp() {
                                     />
                                   </FormControl>
                                   <FormLabel className="w-full cursor-pointer overflow-hidden pl-3 font-normal text-xs leading-6">
-                                    {item.value}
+                                    <span className="block truncate">{getHistoryPreview(item)}</span>
+                                    {item.sourceKind && (
+                                      <span className="block truncate text-muted-foreground">
+                                        {item.sourceKind}
+                                        {item.quality ? `, ${item.quality}` : ''}
+                                      </span>
+                                    )}
                                   </FormLabel>
                                 </div>
                                 <div className="flexflex-auto items-center justify-end">

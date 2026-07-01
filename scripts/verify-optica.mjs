@@ -10,6 +10,7 @@ const DEFAULT_SELECTOR = 'mjx-container.MathJax'
 
 const targetUrl = process.env.VERIFY_URL || DEFAULT_URL
 const formulaSelector = process.env.FORMULA_SELECTOR || DEFAULT_SELECTOR
+const formulaIndex = Number.parseInt(process.env.FORMULA_INDEX || '0', 10)
 const extensionDist = path.resolve(process.env.EXTENSION_DIST || 'dist/chrome-mv3')
 const chromePath = process.env.CHROME_PATH || findChrome()
 const keepProfile = process.env.KEEP_VERIFY_PROFILE === '1'
@@ -65,6 +66,7 @@ try {
     sessionId,
     `(async () => {
       const selector = ${JSON.stringify(formulaSelector)};
+      const index = ${JSON.stringify(formulaIndex)};
       for (const el of Array.from(document.querySelectorAll('body *'))) {
         const text = (el.textContent || '').slice(0, 300);
         const style = getComputedStyle(el);
@@ -75,7 +77,7 @@ try {
           el.style.setProperty('display', 'none', 'important');
         }
       }
-      const el = document.querySelector(selector);
+      const el = Array.from(document.querySelectorAll(selector))[index];
       if (!el) return { ok: false, reason: 'formula not found' };
       el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -160,8 +162,9 @@ try {
     browser: version.product,
     extensionId: extension.id,
     targetUrl,
-    formulaSelector,
-    ready,
+      formulaSelector,
+      formulaIndex,
+      ready,
     clickTarget,
     result,
     events,

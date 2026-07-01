@@ -2,7 +2,14 @@ import './style.css'
 import { sendBrowserMessage } from '@/lib/extension-action'
 import hotkeys from 'hotkeys-js'
 import { ImageAltRule, type Rule, rules } from './const'
-import { createOpacityImage, formatCopiedText, handleMixedCopy, initClipboard } from './util'
+import { toCopyResult } from './copy-result'
+import {
+  createOpacityImage,
+  formatCopiedText,
+  handleMixedCopy,
+  initClipboard,
+  runContentTask,
+} from './util'
 
 type CopyRule = Omit<Rule, 'testUrl'> & { testUrl?: string[] }
 type FormulaTarget = {
@@ -26,19 +33,21 @@ export function latexInit() {
     visibilityWatcherInited = true
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        void init()
+        runContentTask(init(), 'visibility init')
       }
     })
   }
 
-  void init()
+  runContentTask(init(), 'initial init')
 }
 
 async function init() {
   if (inited || document.visibilityState === 'hidden') return
 
   if (!document.body) {
-    document.addEventListener('DOMContentLoaded', () => void init(), { once: true })
+    document.addEventListener('DOMContentLoaded', () => runContentTask(init(), 'dom init'), {
+      once: true,
+    })
     return
   }
 
@@ -72,10 +81,13 @@ async function resolvePrimaryRule(): Promise<CopyRule | undefined> {
 }
 
 function insertRuleStyles() {
-  sendBrowserMessage({
-    greeting: 'insert-css',
-    data: allSelectors,
-  })
+  runContentTask(
+    () => sendBrowserMessage({
+      greeting: 'insert-css',
+      data: allSelectors,
+    }),
+    'insert rule styles',
+  )
 }
 
 function findFirstMatch(rule: CopyRule): HTMLElement | null {
@@ -103,19 +115,19 @@ function handleFormulaClick(e: MouseEvent) {
   if (!match) return
 
   e.stopPropagation()
-  void copyByRule(match.rule, match.el)
+  runContentTask(copyByRule(match.rule, match.el), 'copy formula')
 }
 
 async function copyByRule(curRule: CopyRule, el: HTMLElement) {
-  const res = await curRule.parse(el)
+  const res = toCopyResult(await curRule.parse(el), { displayMode: 'unknown' })
   if (!res) return
 
-  if (typeof res === 'string') {
-    const content = curRule.pre(res)
-    await curRule.post(el, content)
-  } else if (res instanceof Blob) {
-    const content = curRule.pre(res)
-    await curRule.post(el, content)
+  if (typeof res.content === 'string') {
+    const content = curRule.pre(res.content)
+    await curRule.post(el, content, res)
+  } else if (res.content instanceof Blob) {
+    const content = curRule.pre(res.content)
+    await curRule.post(el, content, res)
   }
 }
 
@@ -124,7 +136,7 @@ function eventInit() {
     switch (handler.key) {
       case 'shift+up':
         if (!inited || canCopyAll) return
-        void enterFullPageCopy()
+        runContentTask(enterFullPageCopy(), 'enter full page copy')
         break
       case 'esc':
         if (canCopyAll) exitFullPageCopy()
@@ -136,16 +148,16 @@ function eventInit() {
 
   document.addEventListener('scroll', () => {
     if (!canCopyAll) return
-    void renderFormulaOverlays()
+    runContentTask(renderFormulaOverlays(), 'render formula overlays')
   })
 
   document.addEventListener('copy', (e) => {
     if (canCopyAll) {
-      void formatCopiedText()
+      runContentTask(formatCopiedText(), 'format copied text')
       return
     }
 
-    void handleMixedCopy(e, Object.values(rules))
+    runContentTask(handleMixedCopy(e, Object.values(rules)), 'mixed copy')
   })
 }
 
@@ -170,8 +182,9 @@ async function renderFormulaOverlays() {
   for (const { rule, el } of targets) {
     if (!isVisible(el)) continue
 
-    const content = await rule.parse(el)
-    if (!content || content instanceof Blob) continue
+    const result = toCopyResult(await rule.parse(el), { displayMode: 'unknown' })
+    if (!result || typeof result.content !== 'string') continue
+    const content = rule.pre(result.content)
 
     const parent = el.parentElement
     if (!parent) continue

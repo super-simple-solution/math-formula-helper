@@ -1,10 +1,18 @@
 import {
+  BracePolicy,
+  EnvironmentPolicy,
+  HistoryValueMode,
   LatexSymbol,
   NormalizationType,
   OutputProfile,
+  TagPolicy,
+  defaultBracePolicy,
+  defaultEnvironmentPolicy,
+  defaultHistoryValueMode,
   defaultLatexSymbol,
   defaultNormalization,
   defaultOutputProfile,
+  defaultTagPolicy,
 } from '@/lib/latex'
 import { z } from 'zod'
 
@@ -80,12 +88,83 @@ export const normalizationList = [
   },
 ]
 
-// export const FormSchema = z.object({
-//   format_signs: z
-//     .enum(Object.values(LatexSymbol) as [LatexSymbol, ...LatexSymbol[]])
-//     .default(defaultLatexSymbol),
-//   show_toast: z.boolean().default(true),
-// })
+export const tagPolicyList = [
+  {
+    value: TagPolicy.Auto,
+    title: 'Auto',
+    desc: 'Follow the selected output target.',
+  },
+  {
+    value: TagPolicy.Keep,
+    title: 'Keep Tags',
+    desc: 'Preserve \\tag, \\notag, \\nonumber and \\label.',
+  },
+  {
+    value: TagPolicy.Remove,
+    title: 'Remove Tags',
+    desc: 'Drop equation tags and labels.',
+  },
+]
+
+export const environmentPolicyList = [
+  {
+    value: EnvironmentPolicy.Auto,
+    title: 'Auto',
+    desc: 'Follow the selected output target.',
+  },
+  {
+    value: EnvironmentPolicy.Keep,
+    title: 'Keep Environments',
+    desc: 'Preserve equation, align and gather environments.',
+  },
+  {
+    value: EnvironmentPolicy.Unwrap,
+    title: 'Unwrap',
+    desc: 'Remove environment wrappers and copy the body.',
+  },
+  {
+    value: EnvironmentPolicy.Convert,
+    title: 'Convert',
+    desc: 'Convert display environments to inline-safe aligned or gathered forms.',
+  },
+]
+
+export const bracePolicyList = [
+  {
+    value: BracePolicy.Auto,
+    title: 'Auto',
+    desc: 'Follow the selected output target.',
+  },
+  {
+    value: BracePolicy.Keep,
+    title: 'Keep Braces',
+    desc: 'Preserve parsed brace groups.',
+  },
+  {
+    value: BracePolicy.Clean,
+    title: 'Clean Braces',
+    desc: 'Collapse redundant single-token groups.',
+  },
+]
+
+export const historyValueList = [
+  {
+    value: HistoryValueMode.Raw,
+    title: 'Raw',
+    desc: 'Store parsed source and format it when copied from history.',
+  },
+  {
+    value: HistoryValueMode.Formatted,
+    title: 'Formatted',
+    desc: 'Store the exact text copied to the clipboard.',
+  },
+  {
+    value: HistoryValueMode.Both,
+    title: 'Both',
+    desc: 'Store parsed source plus the formatted clipboard text.',
+  },
+]
+
 export const FormSchema = z.object({
   output_profile: z
     .enum(Object.values(OutputProfile) as [OutputProfile, ...OutputProfile[]])
@@ -93,9 +172,20 @@ export const FormSchema = z.object({
   format_signs: z
     .enum(Object.values(LatexSymbol) as [LatexSymbol, ...LatexSymbol[]])
     .default(defaultLatexSymbol),
-  // 新增字段验证
   normalization: z
     .enum(Object.values(NormalizationType) as [NormalizationType, ...NormalizationType[]])
     .default(defaultNormalization),
+  tag_policy: z.enum(Object.values(TagPolicy) as [TagPolicy, ...TagPolicy[]]).default(defaultTagPolicy),
+  environment_policy: z
+    .enum(Object.values(EnvironmentPolicy) as [EnvironmentPolicy, ...EnvironmentPolicy[]])
+    .default(defaultEnvironmentPolicy),
+  brace_policy: z
+    .enum(Object.values(BracePolicy) as [BracePolicy, ...BracePolicy[]])
+    .default(defaultBracePolicy),
+  history_value: z
+    .enum(Object.values(HistoryValueMode) as [HistoryValueMode, ...HistoryValueMode[]])
+    .default(defaultHistoryValueMode),
   show_toast: z.boolean().default(true),
+  show_source_quality: z.boolean().default(true),
+  selection_copy: z.boolean().default(true),
 })

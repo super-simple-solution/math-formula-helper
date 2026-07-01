@@ -9,6 +9,10 @@
     "build": "wxt build",
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
+    "probe:formula-sites": "node scripts/probe-formula-sites.mjs",
+    "verify:normalization": "tsx scripts/verify-normalization.mts",
+    "verify:mathml-local": "tsx scripts/verify-mathml-local.mts",
+    "verify:selection-copy": "pnpm build && node scripts/verify-selection-copy.mjs",
     "verify:optica": "pnpm build && node scripts/verify-optica.mjs"
   },
   "dependencies": {
@@ -47,7 +51,9 @@
     "@types/react-dom": "^19.0.4",
     "@types/toastify-js": "^1.12.3",
     "@vitejs/plugin-react": "^4.6.0",
+    "katex": "^0.17.0",
     "tailwindcss": "^4.1.10",
+    "tsx": "^4.22.4",
     "typescript": "^5.6.3",
     "vite-plugin-biome": "^1.0.12",
     "wxt": "0.20.11"

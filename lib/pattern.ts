@@ -34,8 +34,7 @@ export async function getPattern(
     patternCache.data = patternList
     ruleTarget = getRule(patternList, domain)
   }
-  // biome-ignore lint/complexity/useOptionalChain: <explanation>
-  cb && cb(ruleTarget ? ruleTarget.rule_key : '')
+  cb?.(ruleTarget?.rule_key ?? '')
 }
 
 export function refreshPattern() {

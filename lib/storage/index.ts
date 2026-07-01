@@ -1,5 +1,13 @@
 import type { Unwatch } from 'wxt/utils/storage'
-import { defaultLatexSymbol, defaultNormalization, defaultOutputProfile } from '../latex'
+import {
+  defaultBracePolicy,
+  defaultEnvironmentPolicy,
+  defaultHistoryValueMode,
+  defaultLatexSymbol,
+  defaultNormalization,
+  defaultOutputProfile,
+  defaultTagPolicy,
+} from '../latex'
 import type { LatexHistory, Pattern, PatternCache, Prefer } from './types'
 export type { Prefer, LatexHistory }
 
@@ -9,16 +17,7 @@ const PATTERN = 'local:pattern'
 
 export async function getPreference() {
   const prefer = await storage.getItem<Prefer>(PREFER)
-  // const { show_toast = true, format_signs = defaultLatexSymbol } = prefer || {}
-  // return { show_toast, format_signs }
-  // 核心修复：为 normalization 添加默认值 defaultNormalization
-  const {
-    show_toast = true,
-    output_profile = defaultOutputProfile,
-    format_signs = defaultLatexSymbol,
-    normalization = defaultNormalization,
-  } = prefer || {}
-  return { show_toast, output_profile, format_signs, normalization }
+  return withPreferenceDefaults(prefer)
 }
 
 export async function setPreference(data: Prefer) {
@@ -26,19 +25,24 @@ export async function setPreference(data: Prefer) {
 }
 
 export function watchPreference(cb: (newValue: Prefer) => void): Unwatch {
-  // return storage.watch<Prefer>(PREFER, (newValue) => newValue && cb(newValue))
-  // 核心修复：watch 到的数据可能是旧的（缺少 normalization），需要合并默认值
   return storage.watch<Prefer>(PREFER, (newValue) => {
-    if (newValue) {
-      const safeValue: Prefer = {
-        show_toast: newValue.show_toast ?? true,
-        output_profile: newValue.output_profile ?? defaultOutputProfile,
-        format_signs: newValue.format_signs ?? defaultLatexSymbol,
-        normalization: newValue.normalization ?? defaultNormalization,
-      }
-      cb(safeValue)
-    }
+    if (newValue) cb(withPreferenceDefaults(newValue))
   })
+}
+
+export function withPreferenceDefaults(prefer?: Partial<Prefer> | null): Prefer {
+  return {
+    show_toast: prefer?.show_toast ?? true,
+    show_source_quality: prefer?.show_source_quality ?? true,
+    selection_copy: prefer?.selection_copy ?? true,
+    history_value: prefer?.history_value ?? defaultHistoryValueMode,
+    output_profile: prefer?.output_profile ?? defaultOutputProfile,
+    format_signs: prefer?.format_signs ?? defaultLatexSymbol,
+    normalization: prefer?.normalization ?? defaultNormalization,
+    tag_policy: prefer?.tag_policy ?? defaultTagPolicy,
+    environment_policy: prefer?.environment_policy ?? defaultEnvironmentPolicy,
+    brace_policy: prefer?.brace_policy ?? defaultBracePolicy,
+  }
 }
 
 const MAX_LENGTH = 200

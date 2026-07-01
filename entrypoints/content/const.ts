@@ -9,10 +9,27 @@ import {
   initMathml,
   svgToImage,
 } from './util'
+import {
+  CopySourceKind,
+  copyResult,
+  detectDisplayMode,
+  type CopyQuality,
+  type CopyResult,
+  type RuleParseResult,
+} from './copy-result'
 
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
-  parse: async (el: HTMLElement) => el.children[0].getAttribute('alt'),
+  parse: async (el: HTMLElement) => {
+    const content = el.children[0]?.getAttribute('alt')
+    return content
+      ? copyResult(content, {
+          sourceKind: CopySourceKind.ImageAlt,
+          quality: 'fallback',
+          displayMode: detectDisplayMode(el),
+        })
+      : null
+  },
   pre,
   post,
 }
@@ -20,9 +37,9 @@ export const ImageAltRule = {
 export type Rule = {
   testUrl: string[]
   selectorList: string[]
-  parse: (el: HTMLElement) => Promise<string | Blob | null>
+  parse: (el: HTMLElement) => Promise<RuleParseResult>
   pre: <T extends string | Blob>(content: T) => T
-  post: <T extends string | Blob>(el: HTMLElement, content: T) => Promise<void>
+  post: <T extends string | Blob>(el: HTMLElement, content: T, result?: CopyResult) => Promise<void>
 }
 
 export const rules: Record<string, Rule> = {
@@ -35,7 +52,16 @@ export const rules: Record<string, Rule> = {
       'math.ltx_Math',
       'ltx_math',
     ],
-    parse: async (el: HTMLElement) => el.getAttribute('alttext'),
+    parse: async (el: HTMLElement) => {
+      const content = el.getAttribute('alttext')
+      return content
+        ? copyResult(content, {
+            sourceKind: CopySourceKind.Annotation,
+            quality: 'exact',
+            displayMode: detectDisplayMode(el),
+          })
+        : null
+    },
     pre,
     post,
   },
@@ -77,6 +103,12 @@ export const rules: Record<string, Rule> = {
               script.getAttribute('type')?.includes('math/tex')
             ) {
               return script.textContent
+                ? copyResult(script.textContent, {
+                    sourceKind: CopySourceKind.MathTexScript,
+                    quality: 'exact',
+                    displayMode: 'display',
+                  })
+                : null
             }
           } else {
             const script = parent.querySelector('script')
@@ -86,6 +118,12 @@ export const rules: Record<string, Rule> = {
               script.getAttribute('type')?.includes('math/tex')
             ) {
               return script.textContent
+                ? copyResult(script.textContent, {
+                    sourceKind: CopySourceKind.MathTexScript,
+                    quality: 'exact',
+                    displayMode: 'inline',
+                  })
+                : null
             }
           }
         }
@@ -126,9 +164,20 @@ export const rules: Record<string, Rule> = {
       const scriptEl = findMathScript(el)
       if (scriptEl) {
         if (scriptEl.type.includes('math/mml')) {
-          return mathmlToLatex(scriptEl.innerHTML || scriptEl.textContent || '')
+          const content = await mathmlToLatex(scriptEl.innerHTML || scriptEl.textContent || '')
+          return copyResult(content, {
+            sourceKind: CopySourceKind.MathML,
+            quality: 'converted',
+            displayMode: detectDisplayMode(el),
+          })
         }
         return scriptEl.textContent
+          ? copyResult(scriptEl.textContent, {
+              sourceKind: CopySourceKind.MathTexScript,
+              quality: 'exact',
+              displayMode: detectDisplayMode(el),
+            })
+          : null
       }
 
       const dataMath =
@@ -136,18 +185,49 @@ export const rules: Record<string, Rule> = {
         el.getAttribute('data-latex') ||
         el.closest('[data-math]')?.getAttribute('data-math') ||
         el.closest('[data-latex]')?.getAttribute('data-latex')
-      if (dataMath) return dataMath
+      if (dataMath) {
+        return copyResult(dataMath, {
+          sourceKind: CopySourceKind.DataAttribute,
+          quality: 'exact',
+          displayMode: detectDisplayMode(el),
+        })
+      }
 
       const targetId = ensureElementId(el)
       const apiResult = targetId ? await getMathJaxSourceFromPage(targetId) : null
-      if (apiResult) return normalizeMathJaxSource(apiResult)
+      if (apiResult) {
+        const embeddedMathml = findEmbeddedMathml(el)
+        if (embeddedMathml && shouldPreferMathmlOverRawTex(apiResult)) {
+          return copyResult(await mathmlToLatex(embeddedMathml.outerHTML), {
+            sourceKind: CopySourceKind.MathML,
+            quality: 'converted',
+            displayMode: detectDisplayMode(el),
+            warnings: ['Converted from MathJax MathML because raw TeX appears to use site macros.'],
+          })
+        }
 
-      return (
+        const content = await normalizeMathJaxSource(apiResult)
+        return copyResult(content, {
+          sourceKind: apiResult.trim().startsWith('<math')
+            ? CopySourceKind.MathML
+            : CopySourceKind.MathJaxApi,
+          quality: apiResult.trim().startsWith('<math') ? 'converted' : 'exact',
+          displayMode: detectDisplayMode(el),
+        })
+      }
+
+      const fallback =
         el.getAttribute('alt') ||
         el.querySelector('img')?.getAttribute('alt') ||
         el.getAttribute('aria-label') ||
         null
-      )
+      return fallback
+        ? copyResult(fallback, {
+            sourceKind: CopySourceKind.ImageAlt,
+            quality: 'fallback',
+            displayMode: detectDisplayMode(el),
+          })
+        : null
     },
     pre,
     post,
@@ -165,11 +245,16 @@ export const rules: Record<string, Rule> = {
 
       const host = location.hostname
       let latexContent = ''
+      let sourceKind = CopySourceKind.Unknown
+      let quality: CopyQuality = 'exact'
+      let warnings: string[] | undefined
       if (annotationEl?.getAttribute('encoding')?.includes('application/x-tex')) {
         latexContent = annotationEl.textContent as string
+        sourceKind = CopySourceKind.Annotation
       } else if (pageHostMatches('gemini.google')) {
         const geminiTexEl = el.closest('.math-block,.math-inline')
         latexContent = geminiTexEl?.getAttribute('data-math') as string
+        sourceKind = CopySourceKind.DataAttribute
       } else if (pageHostMatches('mathsolver.microsoft')) {
         const microsoftTexEl = el
           .closest(
@@ -177,6 +262,7 @@ export const rules: Record<string, Rule> = {
           )
           ?.querySelector('.hidden')
         latexContent = microsoftTexEl?.textContent as string
+        sourceKind = CopySourceKind.DataAttribute
       } else if (mathHTMLDomainList.find((domain) => pageHostMatches(domain))) {
         const chatBubbleContainer = el.closest(
           '.agent-chat__list__item, .chat-content-item, .dialogue_card_item',
@@ -201,22 +287,44 @@ export const rules: Record<string, Rule> = {
               const latexList = [...pureText.matchAll(/\\[\[\(]((?:.|\n|\s)+?)\\[\]\)]/gm)]
               const targetLatexItem = latexList[targetIndex]
               if (targetLatexItem) {
-                return targetLatexItem[1]
+                return copyResult(targetLatexItem[1], {
+                  sourceKind: CopySourceKind.SiteClipboard,
+                  quality: 'exact',
+                  displayMode: detectDisplayMode(el),
+                })
               }
             }
           }
         }
       } else if (mathTexEl) {
         if (mathTexElDomainList.find((domain) => pageHostMatches(domain))) {
-          latexContent = katexHtmlToLatex(el) || katexContentExtra(mathTexEl.textContent as string)
+          const htmlLatex = katexHtmlToLatex(el)
+          latexContent = htmlLatex || katexContentExtra(mathTexEl.textContent as string)
+          sourceKind = CopySourceKind.HtmlFallback
+          quality = 'fallback'
+          warnings = [
+            htmlLatex
+              ? 'Recovered from KaTeX HTML; complex structures may be incomplete.'
+              : 'Recovered from visible KaTeX text; complex structures may be incomplete.',
+          ]
         } else if (host.includes('leetcode.')) {
           const lastChild = mathTexEl.lastChild
           if (lastChild?.nodeType === 3) {
             latexContent = lastChild.textContent as string
+            sourceKind = CopySourceKind.HtmlFallback
+            quality = 'fallback'
+            warnings = ['Recovered from visible KaTeX text; complex structures may be incomplete.']
           }
         }
       }
       return latexContent
+        ? copyResult(latexContent, {
+            sourceKind,
+            quality,
+            displayMode: detectDisplayMode(el),
+            warnings,
+          })
+        : null
     },
     pre,
     post,
@@ -237,16 +345,34 @@ export const rules: Record<string, Rule> = {
     parse: async (el: HTMLElement) => {
       const mathEl = el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
       if (mathEl) {
-        return mathmlToLatex(mathEl.outerHTML)
+        const content = await mathmlToLatex(mathEl.outerHTML)
+        return copyResult(content, {
+          sourceKind: CopySourceKind.MathML,
+          quality: 'converted',
+          displayMode: detectDisplayMode(el),
+        })
       }
 
       const targetId = ensureElementId(el)
       const apiResult = targetId ? await getMathJaxSourceFromPage(targetId) : null
-      if (apiResult) return normalizeMathJaxSource(apiResult)
+      if (apiResult) {
+        const content = await normalizeMathJaxSource(apiResult)
+        return copyResult(content, {
+          sourceKind: apiResult.trim().startsWith('<math')
+            ? CopySourceKind.MathML
+            : CopySourceKind.MathJaxApi,
+          quality: apiResult.trim().startsWith('<math') ? 'converted' : 'exact',
+          displayMode: detectDisplayMode(el),
+        })
+      }
 
       const svgEl = el.querySelector('svg')
       if (svgEl) {
-        return svgToImage(svgEl)
+        return copyResult(await svgToImage(svgEl), {
+          sourceKind: CopySourceKind.Image,
+          quality: 'image',
+          displayMode: detectDisplayMode(el),
+        })
       }
       return null
     },
@@ -281,6 +407,12 @@ export const rules: Record<string, Rule> = {
         latexContent = imgEl.alt
       }
       return latexContent
+        ? copyResult(latexContent, {
+            sourceKind: CopySourceKind.ImageAlt,
+            quality: 'fallback',
+            displayMode: detectDisplayMode(el),
+          })
+        : null
     },
     pre,
     post,
@@ -292,14 +424,23 @@ export const rules: Record<string, Rule> = {
       const element = el as HTMLImageElement
       if (!element.alt) return ''
       // element.alt is TexForm, not latex
-      return element.alt
+      return copyResult(element.alt, {
+        sourceKind: CopySourceKind.ImageAlt,
+        quality: 'fallback',
+        displayMode: 'display',
+        warnings: ['Wolfram MathWorld image alt text is TexForm, not LaTeX.'],
+      })
     },
     pre,
-    post: async <T extends string | Blob>(el: HTMLElement, content: T) => {
+    post: async <T extends string | Blob>(el: HTMLElement, content: T, result?: CopyResult) => {
       if (typeof content === 'string') {
-        copyLatex(content, {
-          text: 'Copied as TexForm(not LaTeX)',
-        })
+        await copyLatex(
+          content,
+          {
+            text: 'Copied as TexForm(not LaTeX)',
+          },
+          result,
+        )
       }
       addCopiedStyle(el)
     },
@@ -322,6 +463,213 @@ function findMathScript(el: HTMLElement) {
   if (isMathScript(nestedScript)) return nestedScript
 
   return null
+}
+
+function findEmbeddedMathml(el: HTMLElement) {
+  const selector = '.MJX_Assistive_MathML math, mjx-assistive-mml math'
+  const localMath = el.querySelector(selector)
+  if (localMath) return localMath
+
+  const mathJaxRoot = el.closest('.MathJax, mjx-container.MathJax')
+  const rootMath = mathJaxRoot?.querySelector(selector)
+  return rootMath || null
+}
+
+function shouldPreferMathmlOverRawTex(rawTex: string) {
+  const source = rawTex.trim()
+  if (!source || source.startsWith('<math')) return false
+
+  const standardMacros = new Set([
+    'AA',
+    'Bbb',
+    'Big',
+    'Bigg',
+    'Delta',
+    'Gamma',
+    'Im',
+    'Lambda',
+    'Leftarrow',
+    'Leftrightarrow',
+    'Omega',
+    'Phi',
+    'Pi',
+    'Psi',
+    'Re',
+    'Rightarrow',
+    'Sigma',
+    'Theta',
+    'Upsilon',
+    'Xi',
+    'aleph',
+    'alpha',
+    'approx',
+    'arccos',
+    'arcsin',
+    'arctan',
+    'arg',
+    'bar',
+    'beta',
+    'big',
+    'bigcap',
+    'bigcup',
+    'bigg',
+    'bigl',
+    'bigr',
+    'binom',
+    'boldsymbol',
+    'brace',
+    'breve',
+    'bullet',
+    'cap',
+    'cdot',
+    'cdots',
+    'chi',
+    'circ',
+    'colon',
+    'cong',
+    'cos',
+    'cosh',
+    'cot',
+    'coth',
+    'csc',
+    'cup',
+    'dagger',
+    'ddagger',
+    'ddot',
+    'def',
+    'delta',
+    'dfrac',
+    'displaystyle',
+    'dot',
+    'dots',
+    'ell',
+    'emptyset',
+    'epsilon',
+    'eta',
+    'exists',
+    'exp',
+    'forall',
+    'frac',
+    'gamma',
+    'ge',
+    'geq',
+    'hat',
+    'hbar',
+    'hom',
+    'hookleftarrow',
+    'hookrightarrow',
+    'iff',
+    'imath',
+    'in',
+    'infty',
+    'int',
+    'iota',
+    'jmath',
+    'kappa',
+    'lambda',
+    'land',
+    'langle',
+    'lbrace',
+    'lbrack',
+    'ldots',
+    'le',
+    'left',
+    'leftarrow',
+    'leftrightarrow',
+    'leq',
+    'lim',
+    'limits',
+    'ln',
+    'log',
+    'lor',
+    'mapsto',
+    'mathbb',
+    'mathbf',
+    'mathcal',
+    'mathfrak',
+    'mathit',
+    'mathrm',
+    'mathscr',
+    'mathsf',
+    'mathtt',
+    'max',
+    'min',
+    'mu',
+    'nabla',
+    'ne',
+    'neq',
+    'not',
+    'notin',
+    'nu',
+    'omega',
+    'operatorname',
+    'oplus',
+    'otimes',
+    'over',
+    'overline',
+    'partial',
+    'perp',
+    'phi',
+    'pi',
+    'pm',
+    'prod',
+    'propto',
+    'psi',
+    'rangle',
+    'rbrace',
+    'rbrack',
+    'right',
+    'rightarrow',
+    'rho',
+    'sec',
+    'setminus',
+    'sigma',
+    'sim',
+    'sin',
+    'sinh',
+    'small',
+    'sqrt',
+    'stackrel',
+    'subset',
+    'subseteq',
+    'sum',
+    'supset',
+    'supseteq',
+    'tan',
+    'tanh',
+    'tau',
+    'text',
+    'textbf',
+    'textrm',
+    'theta',
+    'tilde',
+    'times',
+    'to',
+    'triangle',
+    'underline',
+    'upsilon',
+    'varepsilon',
+    'varphi',
+    'varpi',
+    'varrho',
+    'varsigma',
+    'vartheta',
+    'vec',
+    'vee',
+    'wedge',
+    'widehat',
+    'widetilde',
+    'xi',
+    'zeta',
+  ])
+
+  const commands = source.matchAll(/\\([a-zA-Z]+)\b/g)
+  for (const match of commands) {
+    const command = match[1]
+    if (!standardMacros.has(command)) return true
+  }
+
+  return false
 }
 
 async function normalizeMathJaxSource(source: string) {
@@ -404,6 +752,14 @@ function parseKatexChildren(parent: HTMLElement) {
 function parseKatexNode(el: HTMLElement): string {
   if (isIgnoredKatexNode(el)) return ''
 
+  if (el.classList.contains('mtable')) return parseKatexTable(el)
+
+  if (el.classList.contains('minner') && el.querySelector('.mtable')) {
+    return parseKatexTable(el.querySelector('.mtable') as HTMLElement)
+  }
+
+  if (el.classList.contains('mrel') && isKatexNotEquals(el)) return '\\ne'
+
   if (el.classList.contains('mspace')) return parseKatexSpace(el)
 
   if (el.classList.contains('mathbb')) {
@@ -423,6 +779,45 @@ function parseKatexNode(el: HTMLElement): string {
   }
 
   return parseKatexText(el.textContent || '')
+}
+
+function parseKatexTable(el: HTMLElement) {
+  const columns = Array.from(el.querySelectorAll<HTMLElement>(':scope > .col-align-l')).map(
+    parseKatexTableColumn,
+  )
+  const rowCount = Math.max(0, ...columns.map((column) => column.length))
+  if (!rowCount) return ''
+
+  const rows: string[] = []
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+    const cells = columns
+      .map((column) => column[rowIndex]?.latex || '')
+      .filter((cell) => cell.length > 0)
+    if (cells.length) rows.push(cells.join(' & '))
+  }
+
+  if (!rows.length) return ''
+  return `\\begin{cases} ${rows.join(' \\\\ ')} \\end{cases}`
+}
+
+function parseKatexTableColumn(el: HTMLElement) {
+  return Array.from(el.querySelectorAll<HTMLElement>(':scope > .vlist-t .vlist-r:first-child > .vlist > span'))
+    .map((row) => ({
+      top: getKatexTop(row),
+      latex: cleanKatexLatex(parseKatexChildren(row)),
+    }))
+    .filter((row) => row.latex.length > 0)
+    .sort((a, b) => a.top - b.top)
+}
+
+function getKatexTop(el: HTMLElement) {
+  const match = (el.getAttribute('style') || '').match(/top:\s*(-?\d+(?:\.\d+)?)em/)
+  return match ? Number(match[1]) : 0
+}
+
+function isKatexNotEquals(el: HTMLElement) {
+  const text = el.textContent || ''
+  return text.includes('\ue020') && text.includes('=')
 }
 
 function parseKatexScripts(el: HTMLElement, reference: HTMLElement | null) {
@@ -495,6 +890,7 @@ function parseKatexText(text: string) {
     '←': '\\leftarrow',
     '↦': '\\mapsto',
     '≅': '\\cong',
+    '≃': '\\simeq',
     '≈': '\\approx',
     '∼': '\\sim',
     '≤': '\\le',
@@ -541,26 +937,23 @@ function cleanKatexLatex(latex: string) {
 
 function ensureElementId(el: HTMLElement) {
   if (el.id) return el.id
-  if (el.parentElement?.id) return el.parentElement.id
   el.id = `sss-math-${crypto.randomUUID()}`
   return el.id
 }
 function pre<T extends string | Blob>(content: T): T {
   if (typeof content === 'string') {
-    return latexRefine(content) as T // 处理 string 类型
-    // biome-ignore lint/style/noUselessElse: <explanation>
-  } else {
-    return content // 直接返回 Blob 类型
+    return latexRefine(content) as T
   }
+  return content
 }
 
-async function post<T extends string | Blob>(el: HTMLElement, content: T) {
+async function post<T extends string | Blob>(el: HTMLElement, content: T, result?: CopyResult) {
   if (!content) return
   let copyPromise: Promise<void>
   if (content instanceof Blob) {
     copyPromise = copyLatexAsImage(content)
   } else {
-    copyPromise = copyLatex(content)
+    copyPromise = copyLatex(content, undefined, result)
   }
   await copyPromise
   addCopiedStyle(el)
@@ -586,7 +979,11 @@ function latexRefine(content: string) {
     .replace(/\\&\\text{nbsp};/g, '\\enspace')
     .replace(/&nbsp;/g, '\\enspace')
   if (!trimmedContent.length) return ''
-  if (trimmedContent.includes('\\\\') && !trimmedContent.startsWith('\\begin')) {
+  if (
+    trimmedContent.includes('\\\\') &&
+    !trimmedContent.startsWith('\\begin') &&
+    !trimmedContent.includes('\\begin{')
+  ) {
     return `\\begin{array}{c} ${trimmedContent} \\end{array}`
   }
   return trimmedContent

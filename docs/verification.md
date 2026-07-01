@@ -38,6 +38,30 @@ Reliable options:
 
 Chrome reference: https://developer.chrome.com/blog/extension-news-june-2025
 
+## Local Regression Scripts
+
+These checks do not require a real protected website:
+
+```sh
+pnpm verify:normalization
+pnpm verify:mathml-local
+pnpm verify:selection-copy
+```
+
+`verify:normalization` exercises the LaTeX formatting pipeline, including output profiles, tag handling, environment handling, and redundant-brace cleanup. Several cases also pass the result through KaTeX.
+
+`verify:mathml-local` reads a saved MathML fixture, converts preserved MathML through `mathml-to-latex`, formats it with the KaTeX output profile, and renders each unique formula through strict KaTeX. It first checks that KaTeX really throws for an invalid command, so this catches renderer setup problems as well as formula cleanup regressions. Set `MATHML_FIXTURE=path/to/page.htm` to use another saved page.
+
+`verify:selection-copy` builds the extension, serves a local fixture over `127.0.0.1`, loads the unpacked extension through CDP, selects text containing a KaTeX formula, sends a real copy key event, and verifies the clipboard text. This is a local copy-chain check, not a full real-website regression.
+
+For a quick source-structure survey across formula-heavy sites:
+
+```sh
+pnpm probe:formula-sites
+```
+
+The probe fetches HTML and classifies visible source signals such as KaTeX annotations, MathML, `math/tex` scripts, data attributes, HTML-only KaTeX, runtime-likely MathJax, or protected pages. It is intentionally a structure probe, not proof that clicking and clipboard writes work on the live page.
+
 ## Automated Optica Regression
 
 Run:
@@ -96,6 +120,12 @@ Saved pages are useful for structure analysis, but they are not the same as the 
 2. SingleFile may remove hidden semantic math nodes such as KaTeX MathML annotations. If `.katex-mathml`, `<annotation encoding="application/x-tex">`, `<math>`, and `data-math` are all absent, the original TeX is not preserved in the saved HTML.
 3. SingleFile usually keeps `link rel="canonical"` and a source URL comment. Site-specific rules should consider canonical hosts, not only `location.hostname`, because local saved pages otherwise look like `localhost` or an empty `file://` host.
 4. For Banana Space saved pages, the fallback is to reconstruct LaTeX from KaTeX HTML structure. This is weaker than a real source object but recovers common constructs such as subscripts, `\mathbb{...}`, large spaces, and ellipses.
+
+## Site Macro Source
+
+Some sites expose raw MathJax TeX that depends on site-specific macros. ProofWiki is one example: commands such as `\R`, `\ds`, `\map`, and `\rd` are faithful to that site but not portable to ordinary KaTeX or MathJax environments.
+
+When a page exposes MathJax assistive MathML and the raw TeX contains unknown macros, prefer converting that MathML to portable LaTeX for normal copy output. `verify:mathml-local` covers the saved-page conversion path, and `verify:selection-copy` includes a small macro-source click fixture to ensure the content rule chooses MathML over non-portable raw TeX.
 
 ## Lessons From This Debug Session
 
