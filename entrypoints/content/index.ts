@@ -1,6 +1,7 @@
 import './style.css'
+import { watchPrefer } from './copy-pipeline'
 import { latexInit } from './init'
-import { handleContentError, watchPrefer } from './util'
+import { handleContentError } from './util'
 
 export default defineContentScript({
   matches: ['<all_urls>'],

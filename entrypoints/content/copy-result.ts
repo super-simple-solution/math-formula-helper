@@ -1,3 +1,5 @@
+import type { LatexDisplayMode } from '@/lib/latex'
+
 export enum CopySourceKind {
   Annotation = 'annotation',
   MathJaxApi = 'mathjax-api',
@@ -13,13 +15,14 @@ export enum CopySourceKind {
 
 export type CopyQuality = 'exact' | 'converted' | 'fallback' | 'image'
 
-export type CopyDisplayMode = 'inline' | 'display' | 'unknown'
+export type CopyDisplayMode = LatexDisplayMode
 
 export type CopyResultMetadata = {
   sourceKind?: CopySourceKind
   displayMode?: CopyDisplayMode
   quality?: CopyQuality
   site?: string
+  mathml?: string
   warnings?: string[]
 }
 
@@ -36,6 +39,7 @@ export function copyResult(content: string | Blob, metadata: CopyResultMetadata 
     quality: metadata.quality ?? (isBlob(content) ? 'image' : 'exact'),
     displayMode: metadata.displayMode ?? 'unknown',
     site: metadata.site,
+    mathml: metadata.mathml,
     warnings: metadata.warnings,
   }
 }

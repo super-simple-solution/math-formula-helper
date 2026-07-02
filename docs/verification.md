@@ -44,15 +44,20 @@ These checks do not require a real protected website:
 
 ```sh
 pnpm verify:normalization
+pnpm verify:tex-to-mathml
 pnpm verify:mathml-local
 pnpm verify:selection-copy
 ```
 
-`verify:normalization` exercises the LaTeX formatting pipeline, including output profiles, tag handling, environment handling, and redundant-brace cleanup. Several cases also pass the result through KaTeX.
+`verify:normalization` exercises the LaTeX formatting pipeline, including output profiles, tag handling, environment handling, redundant-brace cleanup, and Word Native clipboard payload generation. Several cases also pass the result through KaTeX. Word Native payload checks confirm `text/html` MathML is generated, but real Microsoft Word paste behavior still needs manual verification.
+
+`verify:tex-to-mathml` exercises the extension-owned TeX-to-MathML fallback. It uses bundled MathJax to convert common TeX, display math, and a few loaded extension packages, and it verifies that unknown macros are rejected instead of being copied as MathML error nodes.
 
 `verify:mathml-local` reads a saved MathML fixture, converts preserved MathML through `mathml-to-latex`, formats it with the KaTeX output profile, and renders each unique formula through strict KaTeX. It first checks that KaTeX really throws for an invalid command, so this catches renderer setup problems as well as formula cleanup regressions. Set `MATHML_FIXTURE=path/to/page.htm` to use another saved page.
 
-`verify:selection-copy` builds the extension, serves a local fixture over `127.0.0.1`, loads the unpacked extension through CDP, selects text containing a KaTeX formula, sends a real copy key event, and verifies the clipboard text. This is a local copy-chain check, not a full real-website regression.
+`verify:selection-copy` builds the extension, serves local fixtures over `127.0.0.1`, loads the unpacked extension through CDP, selects text containing formulas, sends real copy/click events, and verifies the clipboard text. It covers KaTeX annotations, KaTeX HTML-only fallback, display-mode Auto delimiters, MathJax selection cleanup, and MathJax raw-source fallback. This is a local copy-chain check, not a full real-website regression.
+
+Word Native has several source paths that need separate checks. Pages with preserved DOM MathML or KaTeX MathML can write that MathML directly. MathJax 3/4 pages may expose `tex2mml`, `toMathML`, or `startup.document` APIs from MAIN world. MathJax v2 pages such as Kerodon may keep only a runtime MML tree and no assistive MathML in the DOM; those rely on the MAIN-world MathJax v2 serializer before the clipboard payload can include `text/html` MathML. If only TeX is available, the extension asks the page MathJax runtime to convert it first so site macros can be honored, then falls back to bundled MathJax in the background service worker. Unknown macros in the bundled fallback are rejected, not copied as `<merror>`.
 
 For a quick source-structure survey across formula-heavy sites:
 

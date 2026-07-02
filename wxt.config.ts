@@ -5,7 +5,7 @@ import { defineConfig } from 'wxt'
 export default defineConfig({
   outDir: 'dist',
   manifest: {
-    permissions: ['scripting', 'storage', 'sidePanel', 'tabs'],
+    permissions: ['scripting', 'storage', 'sidePanel', 'tabs', 'clipboardRead', 'clipboardWrite'],
     name: 'LaTeX Copy',
     version: '0.3.2',
     description: 'Make copying LaTeX effortless and efficient!',

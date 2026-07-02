@@ -2,14 +2,10 @@ import './style.css'
 import { sendBrowserMessage } from '@/lib/extension-action'
 import hotkeys from 'hotkeys-js'
 import { ImageAltRule, type Rule, rules } from './const'
+import { createOpacityImage, formatCopiedText } from './copy-pipeline'
 import { toCopyResult } from './copy-result'
-import {
-  createOpacityImage,
-  formatCopiedText,
-  handleMixedCopy,
-  initClipboard,
-  runContentTask,
-} from './util'
+import { handleMixedCopy } from './selection-copy'
+import { runContentTask } from './util'
 
 type CopyRule = Omit<Rule, 'testUrl'> & { testUrl?: string[] }
 type FormulaTarget = {
@@ -54,7 +50,6 @@ async function init() {
   primaryRule = await resolvePrimaryRule()
   inited = true
 
-  initClipboard()
   eventInit()
   insertRuleStyles()
   document.body.addEventListener('click', handleFormulaClick, true)
@@ -199,6 +194,7 @@ async function renderFormulaOverlays() {
       width: Math.max(1, Math.ceil(rect.width)),
       height: Math.max(1, Math.ceil(rect.height)),
       alt: content,
+      displayMode: result.displayMode,
       id: uuid,
     })
     if (!img) continue

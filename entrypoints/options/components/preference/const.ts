@@ -28,26 +28,36 @@ export const outputProfileList = [
   {
     value: OutputProfile.MarkdownKatex,
     title: 'Markdown + KaTeX',
-    desc: 'Default for most Markdown editors and KaTeX renderers.',
+    desc: 'Auto uses inline Markdown math and KaTeX-safe cleanup.',
   },
   {
     value: OutputProfile.MarkdownMathJax,
     title: 'Markdown + MathJax',
-    desc: 'Keeps more display math structure for MathJax-based pages.',
+    desc: 'Auto uses inline Markdown math and MathJax-friendly cleanup.',
   },
   {
     value: OutputProfile.LatexDocument,
     title: 'LaTeX Document',
-    desc: 'Copies content without Markdown math delimiters.',
+    desc: 'Auto uses no Markdown delimiters and keeps LaTeX document structure.',
+  },
+  {
+    value: OutputProfile.WordNative,
+    title: 'Word Native',
+    desc: 'Copy MathML HTML for Microsoft Word, with cleaned LaTeX as fallback text.',
   },
   {
     value: OutputProfile.Raw,
     title: 'Raw Source',
-    desc: 'No wrapping or normalization; useful for debugging.',
+    desc: 'Auto uses no wrapping or normalization; useful for debugging.',
   },
 ]
 
 export const symbolList: SymbolItem[] = [
+  {
+    symbol: LatexSymbol.Auto,
+    title: 'Auto',
+    desc: 'Use inline or display delimiters from the formula when available.',
+  },
   {
     symbol: LatexSymbol.Inline,
     title: '$...$',
@@ -71,6 +81,11 @@ export const symbolList: SymbolItem[] = [
 ]
 
 export const normalizationList = [
+  {
+    value: NormalizationType.Auto,
+    title: 'Auto',
+    desc: 'Follow the selected output target.',
+  },
   {
     value: NormalizationType.KaTex,
     title: 'KaTeX Optimized',

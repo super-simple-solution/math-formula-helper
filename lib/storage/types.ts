@@ -2,6 +2,7 @@ import type {
   BracePolicy,
   EnvironmentPolicy,
   HistoryValueMode,
+  LatexDisplayMode,
   LatexSymbol,
   NormalizationType,
   OutputProfile,
@@ -29,7 +30,8 @@ export type LatexHistory = {
   formatted?: string
   sourceKind?: string
   quality?: string
-  displayMode?: string
+  displayMode?: LatexDisplayMode
+  mathml?: string
   warnings?: string[]
 }
 

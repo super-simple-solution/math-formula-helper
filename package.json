@@ -11,6 +11,7 @@
     "postinstall": "wxt prepare",
     "probe:formula-sites": "node scripts/probe-formula-sites.mjs",
     "verify:normalization": "tsx scripts/verify-normalization.mts",
+    "verify:tex-to-mathml": "tsx scripts/verify-tex-to-mathml.mts",
     "verify:mathml-local": "tsx scripts/verify-mathml-local.mts",
     "verify:selection-copy": "pnpm build && node scripts/verify-selection-copy.mjs",
     "verify:optica": "pnpm build && node scripts/verify-optica.mjs"
@@ -33,6 +34,7 @@
     "hotkeys-js": "^3.13.9",
     "install": "^0.13.0",
     "lucide-react": "0.510.0",
+    "mathjax-full": "^3.2.2",
     "mathml-to-latex": "^1.5.0",
     "next-themes": "^0.4.4",
     "react": "^19.0.0",
@@ -40,7 +42,6 @@
     "react-hook-form": "^7.54.2",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
-    "toastify-js": "^1.12.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -49,7 +50,6 @@
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
-    "@types/toastify-js": "^1.12.3",
     "@vitejs/plugin-react": "^4.6.0",
     "katex": "^0.17.0",
     "tailwindcss": "^4.1.10",

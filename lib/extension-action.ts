@@ -1,10 +1,24 @@
 import { browser } from 'wxt/browser'
+import type { LatexDisplayMode } from './latex-options'
 
-type GreetingType = 'insert-css' | 'get-active-tab' | 'get-pattern' | 'get-mathjax-source'
+type GreetingType =
+  | 'insert-css'
+  | 'get-active-tab'
+  | 'get-pattern'
+  | 'get-mathjax-source'
+  | 'convert-tex-to-mathjax-mathml'
+  | 'convert-tex-to-local-mathml'
+
+export type MathJaxPageSource = string | { tex?: string | null; mathml?: string | null }
+
+export type MathJaxTexToMathmlRequest = {
+  tex?: string
+  displayMode?: LatexDisplayMode
+}
 
 export type BrowserRequest = {
   greeting: GreetingType
-  data?: object | any[]
+  data?: Record<string, unknown> | unknown[]
 }
 
 export type handlerParams = {

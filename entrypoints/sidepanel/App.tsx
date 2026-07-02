@@ -3,6 +3,12 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  buildHtmlClipboardDocument,
+  normalizeMathmlForClipboard,
+  writeClipboardPayload,
+  type FormulaClipboardPayload,
+} from '@/lib/clipboard-payload'
 import { sendBrowserMessage } from '@/lib/extension-action'
 import {
   defaultBracePolicy,
@@ -13,6 +19,7 @@ import {
   defaultOutputProfile,
   defaultTagPolicy,
   HistoryValueMode,
+  OutputProfile,
   latexFormat,
 } from '@/lib/latex'
 import {
@@ -42,18 +49,55 @@ function getHistoryCopyContent(item: LatexHistory, prefer: Prefer) {
     prefer.history_value === HistoryValueMode.Formatted ||
     prefer.history_value === HistoryValueMode.Both
   ) {
-    return item.formatted || latexFormat(item.value, prefer)
+    return item.formatted || latexFormat(item.value, prefer, { displayMode: item.displayMode })
   }
 
-  return latexFormat(item.value, prefer)
+  return latexFormat(item.value, prefer, { displayMode: item.displayMode })
 }
 
 function getHistoryPreview(item: LatexHistory) {
   return item.formatted || item.value
 }
 
-async function copy(content: string) {
-  await navigator.clipboard.writeText(content)
+async function getHistoryClipboardPayload(
+  item: LatexHistory,
+  prefer: Prefer,
+): Promise<FormulaClipboardPayload> {
+  const text = getHistoryCopyContent(item, prefer)
+  const mathml =
+    item.mathml ||
+    (prefer.output_profile === OutputProfile.WordNative
+      ? await convertHistoryLatexToMathml(item)
+      : undefined)
+  const htmlFragment =
+    prefer.output_profile === OutputProfile.WordNative && mathml
+      ? normalizeMathmlForClipboard(mathml, item.displayMode)
+      : ''
+
+  return {
+    text,
+    htmlFragment: htmlFragment || undefined,
+    html: htmlFragment ? buildHtmlClipboardDocument(htmlFragment) : undefined,
+  }
+}
+
+async function convertHistoryLatexToMathml(item: LatexHistory) {
+  try {
+    const mathml = await sendBrowserMessage({
+      greeting: 'convert-tex-to-local-mathml',
+      data: {
+        tex: item.value,
+        displayMode: item.displayMode,
+      },
+    })
+    return typeof mathml === 'string' && mathml.trim().startsWith('<math') ? mathml : undefined
+  } catch {
+    return undefined
+  }
+}
+
+async function copy(payload: FormulaClipboardPayload) {
+  await writeClipboardPayload(navigator.clipboard, payload)
   toast({
     text: 'Copied Successful. ✨',
   })
@@ -163,8 +207,11 @@ function SiderPanelApp() {
   }
 
   const copyLatex = async (idList: string[]) => {
-    const content = getContent(idList)
-    await copy(content)
+    const singleItem = idList.length === 1 ? curMapRef.current[idList[0]] : undefined
+    const payload = singleItem
+      ? await getHistoryClipboardPayload(singleItem, preferRef.current)
+      : { text: getContent(idList) }
+    await copy(payload)
   }
 
   const clearAllHistory = async () => {
@@ -275,7 +322,7 @@ function SiderPanelApp() {
                                     )}
                                   </FormLabel>
                                 </div>
-                                <div className="flexflex-auto items-center justify-end">
+                                <div className="flex flex-auto items-center justify-end">
                                   {/* katex */}
                                   {/* <TooltipProvider>
                                     <Tooltip>

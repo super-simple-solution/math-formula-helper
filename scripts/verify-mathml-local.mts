@@ -17,12 +17,15 @@ const errors: Array<{ index: number; raw: string; formatted: string; error: stri
 
 assert.throws(
   () => katex.renderToString(String.raw`\definitelyNotAMacro`, { throwOnError: true }),
-  undefined,
+  /definitelyNotAMacro/,
   'KaTeX sanity check did not throw for an unknown command.',
 )
 
 for (let index = 0; index < mathmlBlocks.length; index += 1) {
-  const raw = MathMLToLaTeX.convert(mathmlBlocks[index])
+  const mathml = mathmlBlocks[index]
+  if (!mathml) continue
+
+  const raw = MathMLToLaTeX.convert(mathml)
   if (!raw || seen.has(raw)) continue
   seen.add(raw)
 

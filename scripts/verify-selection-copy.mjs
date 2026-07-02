@@ -14,6 +14,8 @@ const expectedText = 'Before $x^{2}$ after.'
 const expectedMathJaxSelectionText =
   'To any topological space $X$, one can associate the set $\\pi_{0} \\left(X\\right)$ of path components of $X$.'
 const expectedMacroSourceText = '$A \\times B$'
+const expectedKatexHtmlFallbackText = '$A \\times B$'
+const expectedDisplayKatexText = '$$E = mc^2$$'
 
 if (!chromePath) fail('Chrome executable was not found. Set CHROME_PATH to the Chrome executable.')
 if (!existsSync(extensionDist)) fail(`Extension build not found at ${extensionDist}. Run pnpm build first.`)
@@ -101,6 +103,113 @@ const server = createServer((request, response) => {
     return
   }
 
+  if (pathname === '/mathjax-v2-runtime') {
+    response.end(`<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>MathJax v2 runtime fixture</title>
+          <script>
+            const chars = (text) => ({ type: 'chars', data: [text] });
+            const entity = (text) => ({ type: 'entity', data: [text] });
+            const token = (type, data) => ({ type, isToken: true, data });
+            window.MathJax = {
+              version: '2.7.0',
+              Hub: {
+                getJaxFor(el) {
+                  if (el?.id !== 'mathjax-v2-runtime-formula') return null;
+                  return {
+                    originalText: '\\\\pi _0(X)',
+                    SourceElement() {
+                      return { textContent: '\\\\pi _0(X)' };
+                    },
+                    root: {
+                      type: 'math',
+                      data: [{
+                        type: 'mrow',
+                        inferred: true,
+                        data: [
+                          {
+                            type: 'msubsup',
+                            data: [
+                              token('mi', [entity('#x03C0')]),
+                              token('mn', [chars('0')]),
+                              null,
+                            ],
+                          },
+                          token('mo', [chars('(')]),
+                          token('mi', [chars('X')]),
+                          token('mo', [chars(')')]),
+                        ],
+                      }],
+                    },
+                  };
+                },
+              },
+            };
+          </script>
+        </head>
+        <body>
+          <p><span id="mathjax-v2-runtime-formula" class="MathJax">π0(X)</span></p>
+        </body>
+      </html>`)
+    return
+  }
+
+  if (pathname === '/katex-html-fallback') {
+    response.end(`<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <link rel="canonical" href="https://www.bananaspace.org/wiki/html-fallback-fixture" />
+          <title>KaTeX HTML fallback fixture</title>
+        </head>
+        <body>
+          <p>
+            <span id="katex-html-fallback-formula" class="katex">
+              <span class="katex-html" aria-hidden="true">
+                <span class="base">
+                  <span class="mord mathnormal">A</span>
+                  <span class="mbin">×</span>
+                  <span class="mord mathnormal">B</span>
+                </span>
+              </span>
+            </span>
+          </p>
+        </body>
+      </html>`)
+    return
+  }
+
+  if (pathname === '/display-katex') {
+    response.end(`<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Display KaTeX fixture</title>
+        </head>
+        <body>
+          <p>Display formula:</p>
+          <span id="display-katex-formula" class="katex-display">
+            <span class="katex">
+              <span class="katex-mathml">
+                <math>
+                  <semantics>
+                    <mrow>
+                      <mi>E</mi><mo>=</mo><mi>m</mi><msup><mi>c</mi><mn>2</mn></msup>
+                    </mrow>
+                    <annotation encoding="application/x-tex">E = mc^2</annotation>
+                  </semantics>
+                </math>
+              </span>
+              <span class="katex-html" aria-hidden="true">E=mc2</span>
+            </span>
+          </span>
+        </body>
+      </html>`)
+    return
+  }
+
   response.end(`<!doctype html>
     <html>
       <head>
@@ -130,6 +239,7 @@ const server = createServer((request, response) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
 const port = server.address().port
 const targetUrl = `http://127.0.0.1:${port}/`
+const targetOrigin = new URL(targetUrl).origin
 
 await mkdir(userDataDir, { recursive: true })
 
@@ -162,11 +272,14 @@ try {
   await cdp.send('Runtime.enable', {}, sessionId)
   await cdp.send('Page.enable', {}, sessionId)
   await cdp.send('Browser.grantPermissions', {
-    origin: targetUrl,
+    origin: targetOrigin,
     permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
   })
+  await grantClipboardPermission(cdp, targetOrigin)
   await cdp.send('Page.navigate', { url: targetUrl }, sessionId)
   await waitForSelector(cdp, sessionId, '.katex')
+  await cdp.send('Target.activateTarget', { targetId: target.targetId })
+  await evaluate(cdp, sessionId, `window.focus()`)
   await sleep(1200)
 
   const sampleRect = await evaluate(
@@ -321,54 +434,59 @@ try {
     throw new Error('MathJax selection fixture leaked rendered/script text')
   }
 
+  const katexHtmlFallbackUrl = `${targetUrl}katex-html-fallback`
+  await cdp.send('Page.navigate', { url: katexHtmlFallbackUrl }, sessionId)
+  await waitForSelector(cdp, sessionId, '#katex-html-fallback-formula')
+  await sleep(1200)
+
+  const katexHtmlFallbackClipboardText = await clickElementAndReadClipboard(
+    cdp,
+    sessionId,
+    '#katex-html-fallback-formula',
+  )
+  const katexHtmlFallbackReport = {
+    ok: katexHtmlFallbackClipboardText === expectedKatexHtmlFallbackText,
+    targetUrl: katexHtmlFallbackUrl,
+    clipboardText: katexHtmlFallbackClipboardText,
+    expectedText: expectedKatexHtmlFallbackText,
+  }
+
+  console.log(JSON.stringify(katexHtmlFallbackReport, null, 2))
+  if (!katexHtmlFallbackReport.ok) {
+    throw new Error('KaTeX HTML fallback fixture did not copy reconstructed LaTeX output')
+  }
+
+  const displayKatexUrl = `${targetUrl}display-katex`
+  await cdp.send('Page.navigate', { url: displayKatexUrl }, sessionId)
+  await waitForSelector(cdp, sessionId, '#display-katex-formula')
+  await sleep(1200)
+
+  const displayKatexClipboardText = await clickElementAndReadClipboard(
+    cdp,
+    sessionId,
+    '#display-katex-formula',
+  )
+  const displayKatexReport = {
+    ok: displayKatexClipboardText === expectedDisplayKatexText,
+    targetUrl: displayKatexUrl,
+    clipboardText: displayKatexClipboardText,
+    expectedText: expectedDisplayKatexText,
+  }
+
+  console.log(JSON.stringify(displayKatexReport, null, 2))
+  if (!displayKatexReport.ok) {
+    throw new Error('Display KaTeX fixture did not use display delimiters in Auto mode')
+  }
+
   const macroSourceUrl = `${targetUrl}macro-source`
   await cdp.send('Page.navigate', { url: macroSourceUrl }, sessionId)
   await waitForSelector(cdp, sessionId, '#macro-source-formula')
   await sleep(1200)
 
-  const macroSourceRect = await evaluate(
+  const macroSourceClipboardText = await clickElementAndReadClipboard(
     cdp,
     sessionId,
-    `(() => {
-      const formula = document.querySelector('#macro-source-formula');
-      formula.scrollIntoView({ block: 'center', inline: 'center' });
-      const rect = formula.getBoundingClientRect();
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    })()`,
-  )
-  await cdp.send(
-    'Input.dispatchMouseEvent',
-    { type: 'mouseMoved', x: macroSourceRect.x, y: macroSourceRect.y, button: 'none' },
-    sessionId,
-  )
-  await cdp.send(
-    'Input.dispatchMouseEvent',
-    {
-      type: 'mousePressed',
-      x: macroSourceRect.x,
-      y: macroSourceRect.y,
-      button: 'left',
-      clickCount: 1,
-    },
-    sessionId,
-  )
-  await cdp.send(
-    'Input.dispatchMouseEvent',
-    {
-      type: 'mouseReleased',
-      x: macroSourceRect.x,
-      y: macroSourceRect.y,
-      button: 'left',
-      clickCount: 1,
-    },
-    sessionId,
-  )
-  await sleep(1200)
-
-  const macroSourceClipboardText = await evaluate(
-    cdp,
-    sessionId,
-    `(async () => navigator.clipboard.readText())()`,
+    '#macro-source-formula',
   )
   const macroSourceReport = {
     ok: macroSourceClipboardText === expectedMacroSourceText,
@@ -380,6 +498,51 @@ try {
   console.log(JSON.stringify(macroSourceReport, null, 2))
   if (!macroSourceReport.ok) {
     throw new Error('MathJax site macro fixture did not copy converted MathML output')
+  }
+
+  await setExtensionPreference(cdp, extension.id, {
+    show_toast: true,
+    show_source_quality: true,
+    selection_copy: true,
+    history_value: 'raw',
+    output_profile: 'word-native',
+    format_signs: 'auto',
+    normalization: 'auto',
+    tag_policy: 'auto',
+    environment_policy: 'auto',
+    brace_policy: 'auto',
+  })
+
+  const mathJaxV2RuntimeUrl = `${targetUrl}mathjax-v2-runtime`
+  await cdp.send('Page.navigate', { url: mathJaxV2RuntimeUrl }, sessionId)
+  await waitForSelector(cdp, sessionId, '#mathjax-v2-runtime-formula')
+  await sleep(1200)
+
+  const wordNativePayload = await clickElementAndReadClipboardPayload(
+    cdp,
+    sessionId,
+    '#mathjax-v2-runtime-formula',
+  )
+  const wordNativeHtml =
+    wordNativePayload.items
+      .find((item) => item.types.includes('text/html'))
+      ?.content.find((entry) => entry.type === 'text/html')?.text || ''
+  const wordNativeReport = {
+    ok:
+      wordNativePayload.text === String.raw`\pi _0(X)` &&
+      /<math\b/i.test(wordNativeHtml) &&
+      /<msub>/i.test(wordNativeHtml) &&
+      /<mi>\s*(?:π|&#x03C0;)\s*<\/mi>/i.test(wordNativeHtml),
+    targetUrl: mathJaxV2RuntimeUrl,
+    clipboardText: wordNativePayload.text,
+    expectedText: String.raw`\pi _0(X)`,
+    clipboardTypes: wordNativePayload.items.map((item) => item.types),
+    html: wordNativeHtml,
+  }
+
+  console.log(JSON.stringify(wordNativeReport, null, 2))
+  if (!wordNativeReport.ok) {
+    throw new Error('Word Native MathJax fixture did not write MathML HTML to the clipboard')
   }
 } finally {
   server.close()
@@ -409,6 +572,131 @@ async function waitForSelector(cdp, sessionId, selector, timeout = 20000) {
   }
 
   throw new Error(`No elements found for selector ${selector}`)
+}
+
+async function clickElementAndReadClipboard(cdp, sessionId, selector) {
+  await clickElement(cdp, sessionId, selector)
+  return evaluate(cdp, sessionId, `(async () => navigator.clipboard.readText())()`)
+}
+
+async function clickElementAndReadClipboardPayload(cdp, sessionId, selector) {
+  await clickElement(cdp, sessionId, selector)
+  return evaluate(
+    cdp,
+    sessionId,
+    `(async () => {
+      const text = await navigator.clipboard.readText();
+      const items = await navigator.clipboard.read();
+      const serializedItems = [];
+      for (const item of items) {
+        const content = [];
+        for (const type of item.types) {
+          const blob = await item.getType(type);
+          content.push({ type, text: await blob.text() });
+        }
+        serializedItems.push({ types: item.types, content });
+      }
+      return { text, items: serializedItems };
+    })()`,
+  )
+}
+
+async function clickElement(cdp, sessionId, selector) {
+  const rect = await evaluate(
+    cdp,
+    sessionId,
+    `(() => {
+      const formula = document.querySelector(${JSON.stringify(selector)});
+      formula.scrollIntoView({ block: 'center', inline: 'center' });
+      const rect = formula.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    })()`,
+  )
+  await cdp.send(
+    'Input.dispatchMouseEvent',
+    { type: 'mouseMoved', x: rect.x, y: rect.y, button: 'none' },
+    sessionId,
+  )
+  await cdp.send(
+    'Input.dispatchMouseEvent',
+    {
+      type: 'mousePressed',
+      x: rect.x,
+      y: rect.y,
+      button: 'left',
+      clickCount: 1,
+    },
+    sessionId,
+  )
+  await cdp.send(
+    'Input.dispatchMouseEvent',
+    {
+      type: 'mouseReleased',
+      x: rect.x,
+      y: rect.y,
+      button: 'left',
+      clickCount: 1,
+    },
+    sessionId,
+  )
+  await sleep(1200)
+}
+
+async function setExtensionPreference(cdp, extensionId, preference) {
+  const target = await cdp.send('Target.createTarget', {
+    url: `chrome-extension://${extensionId}/options.html`,
+  })
+  const { sessionId } = await cdp.send('Target.attachToTarget', {
+    targetId: target.targetId,
+    flatten: true,
+  })
+
+  try {
+    await cdp.send('Runtime.enable', {}, sessionId)
+    await waitForExtensionChromeApi(cdp, sessionId)
+    await evaluate(
+      cdp,
+      sessionId,
+      `new Promise((resolve, reject) => {
+        chrome.storage.sync.set({ preference: ${JSON.stringify(preference)} }, () => {
+          const error = chrome.runtime.lastError;
+          if (error) reject(new Error(error.message));
+          else resolve(true);
+        });
+      })`,
+    )
+  } finally {
+    await cdp.send('Target.closeTarget', { targetId: target.targetId })
+  }
+}
+
+async function grantClipboardPermission(cdp, origin) {
+  for (const name of ['clipboard-read', 'clipboard-write']) {
+    try {
+      await cdp.send('Browser.setPermission', {
+        origin,
+        permission: { name },
+        setting: 'granted',
+      })
+    } catch {}
+  }
+}
+
+async function waitForExtensionChromeApi(cdp, sessionId, timeout = 10000) {
+  const deadline = Date.now() + timeout
+
+  while (Date.now() < deadline) {
+    const result = await evaluate(
+      cdp,
+      sessionId,
+      `(() => typeof chrome !== 'undefined' && !!chrome.storage?.sync)()`,
+      5000,
+    )
+    if (result) return
+    await sleep(250)
+  }
+
+  throw new Error('Extension options page did not expose chrome.storage.sync')
 }
 
 async function evaluate(cdp, sessionId, expression, timeout = 45000) {

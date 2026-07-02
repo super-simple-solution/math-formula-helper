@@ -19,6 +19,7 @@ import {
   defaultOutputProfile,
   defaultTagPolicy,
   getOutputProfileDefaults,
+  LatexSymbol,
   OutputProfile,
   parserMap,
 } from '@/lib/latex'
@@ -59,6 +60,7 @@ export function Preference() {
     },
     values: prefer,
   })
+  const watchedOutputProfile = form.watch('output_profile') ?? defaultOutputProfile
 
   useEffect(() => {
     getPreference().then((res) => {
@@ -67,10 +69,18 @@ export function Preference() {
   }, [])
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setPreference(data)
+    await setPreference(data)
     toast({
       text: 'Your preference Saved',
     })
+  }
+
+  function getSymbolPreview(symbol: LatexSymbol) {
+    const resolvedSymbol =
+      symbol === LatexSymbol.Auto
+        ? getOutputProfileDefaults(watchedOutputProfile as OutputProfile).format_signs
+        : symbol
+    return parserMap[resolvedSymbol](latexDemo)
   }
 
   return (
@@ -87,17 +97,12 @@ export function Preference() {
                   <div className="space-y-0.5">
                     <FormLabel>Output Target</FormLabel>
                     <FormDescription>
-                      Choose the environment where copied formulas are usually pasted.
+                      Choose the environment used by Auto options below.
                     </FormDescription>
                   </div>
                   <FormControl>
                     <RadioGroup
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        const defaults = getOutputProfileDefaults(value as OutputProfile)
-                        form.setValue('format_signs', defaults.format_signs)
-                        form.setValue('normalization', defaults.normalization)
-                      }}
+                      onValueChange={field.onChange}
                       value={field.value}
                     >
                       {outputProfileList.map((item) => (
@@ -105,8 +110,12 @@ export function Preference() {
                           key={item.value}
                           className="flex w-full cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-muted"
                         >
-                          <RadioGroupItem value={item.value} id={item.value} className="mt-1" />
-                          <Label className="cursor-pointer" htmlFor={item.value}>
+                          <RadioGroupItem
+                            value={item.value}
+                            id={`output-profile-${item.value}`}
+                            className="mt-1"
+                          />
+                          <Label className="cursor-pointer" htmlFor={`output-profile-${item.value}`}>
                             <div>{item.title}</div>
                             <div className="text-muted-foreground text-xs">{item.desc}</div>
                           </Label>
@@ -123,10 +132,9 @@ export function Preference() {
               render={({ field }) => (
                 <FormItem className="rounded-lg border p-3 shadow-sm">
                   <div className="space-y-0.5">
-                    <FormLabel>Latex Format</FormLabel>
+                    <FormLabel>Math Delimiters</FormLabel>
                     <FormDescription>
-                      To insert specified characters before and after LaTeX code so that it displays
-                      normally when pasted.
+                      Choose the wrapper around copied formulas. Auto follows Output Target.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -136,12 +144,19 @@ export function Preference() {
                           key={item.symbol}
                           className="flex w-full cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-muted"
                         >
-                          <RadioGroupItem value={item.symbol} id={item.symbol} className="mt-1" />
-                          <Label className="min-w-0 flex-1 cursor-pointer" htmlFor={item.symbol}>
+                          <RadioGroupItem
+                            value={item.symbol}
+                            id={`latex-format-${item.symbol}`}
+                            className="mt-1"
+                          />
+                          <Label
+                            className="min-w-0 flex-1 cursor-pointer"
+                            htmlFor={`latex-format-${item.symbol}`}
+                          >
                             <div>{item.title}</div>
                             <div className="text-muted-foreground text-xs">{item.desc}</div>
                             <code className="mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded bg-muted px-2 py-1 text-xs">
-                              {parserMap[item.symbol](latexDemo)}
+                              {getSymbolPreview(item.symbol)}
                             </code>
                           </Label>
                         </div>
@@ -159,7 +174,7 @@ export function Preference() {
                   <div className="space-y-0.5">
                     <FormLabel>Normalize LaTeX</FormLabel>
                     <FormDescription>
-                      Clean copied source for the renderer you usually paste into.
+                      Choose cleanup behavior. Auto follows Output Target.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -169,8 +184,12 @@ export function Preference() {
                           key={item.value}
                           className="flex w-full cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-muted"
                         >
-                          <RadioGroupItem value={item.value} id={item.value} className="mt-1" />
-                          <Label className="cursor-pointer" htmlFor={item.value}>
+                          <RadioGroupItem
+                            value={item.value}
+                            id={`normalization-${item.value}`}
+                            className="mt-1"
+                          />
+                          <Label className="cursor-pointer" htmlFor={`normalization-${item.value}`}>
                             <div>{item.title}</div>
                             <div className="text-muted-foreground text-xs">{item.desc}</div>
                           </Label>
