@@ -8,13 +8,12 @@ export function latexInit() {
   init(true)
 }
 
-let count = 0
-let inited = false
-let canCopyAll = false
-let rule: Rule | undefined
+const MAX_RETRIES = 5
+const state = { count: 0, inited: false, canCopyAll: false, rule: undefined as Rule | undefined }
+
 async function init(isReset: boolean) {
-  if (inited) return
-  if (isReset) count = 0
+  if (state.inited) return
+  if (isReset) state.count = 0
   if (document.visibilityState === 'hidden') return
   const ruleKey = await sendBrowserMessage({
     greeting: 'get-pattern',
@@ -24,25 +23,25 @@ async function init(isReset: boolean) {
   })
   console.log(ruleKey, 'ruleKey')
   if (ruleKey) {
-    rule = rules[ruleKey as string]
+    state.rule = rules[ruleKey as string]
   } else {
-    rule = Object.values(rules).find((item) => document.querySelector(item.selectorList.join()))
+    state.rule = Object.values(rules).find((item) => document.querySelector(item.selectorList.join()))
   }
-  if (count > 5) return
-  count++
-  if (!rule) {
+  if (state.count >= MAX_RETRIES) return
+  state.count++
+  if (!state.rule) {
     setTimeout(() => init(false), 2000)
     return
   }
-  inited = true
+  state.inited = true
   initClipboard()
   eventInit()
   sendBrowserMessage({
     greeting: 'insert-css',
-    data: [...rule.selectorList, ...ImageAltRule.selectorList],
+    data: [...state.rule.selectorList, ...ImageAltRule.selectorList],
   })
 
-  const curRule = canCopyAll ? ImageAltRule : rule
+  const curRule = state.canCopyAll ? ImageAltRule : state.rule
   const selector = curRule.selectorList.join()
 
   document.body.addEventListener(
@@ -73,7 +72,7 @@ function eventInit() {
   hotkeys('shift+up,esc', (_, handler) => {
     switch (handler.key) {
       case 'shift+up':
-        if (!inited || canCopyAll) return
+        if (!state.inited || state.canCopyAll) return
         fullPageCopy()
         break
       default:
@@ -81,14 +80,14 @@ function eventInit() {
   })
 
   document.addEventListener('visibilitychange', () => {
-    if (!inited && document.visibilityState === 'visible') {
+    if (!state.inited && document.visibilityState === 'visible') {
       init(true)
     }
   })
 
   document.addEventListener('scroll', () => {
-    if (!canCopyAll) return
-    const ruleSelector = rule?.selectorList.join()
+    if (!state.canCopyAll) return
+    const ruleSelector = state.rule?.selectorList.join()
     if (!ruleSelector?.length) return
     const elList = Array.from(document.querySelectorAll(ruleSelector)).filter(
       (item) => !item.getAttribute('data-uuid'),
@@ -98,15 +97,15 @@ function eventInit() {
   })
 
   document.addEventListener('copy', () => {
-    if (!canCopyAll) return
+    if (!state.canCopyAll) return
     formatCopiedText()
   })
 }
 
 async function fullPageCopy(targetList: HTMLElement[] = []) {
-  canCopyAll = true
-  if (!rule) return
-  const ruleSelector = rule?.selectorList.join()
+  state.canCopyAll = true
+  if (!state.rule) return
+  const ruleSelector = state.rule?.selectorList.join()
   if (!ruleSelector?.length) return
   const elList = targetList.length ? targetList : document.querySelectorAll(ruleSelector)
   for (const el of elList as HTMLElement[]) {
@@ -116,7 +115,7 @@ async function fullPageCopy(targetList: HTMLElement[] = []) {
     if (!parent) return
     const parentPosition = window.getComputedStyle(parent).position
     if (parentPosition === 'static') parent.style.position = 'relative'
-    const content = await rule.parse(el)
+    const content = await state.rule.parse(el)
     el.setAttribute('data-uuid', uuid)
     el.classList.add('sss-none-select')
     if (!content || content instanceof Blob) continue
