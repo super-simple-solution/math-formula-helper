@@ -6,6 +6,7 @@ import {
 } from './latex-options'
 import { normalizeLatexContent } from './latex-normalize'
 
+// Applies cleanup first, then wraps the normalized formula with the resolved delimiter policy.
 export function formatLatex(
   content: string,
   prefer: LatexFormatOptions,
@@ -16,4 +17,5 @@ export function formatLatex(
   return parserMap[options.format_signs](cleanContent)
 }
 
+// Backward-compatible export kept for older imports that still use the previous name.
 export const latexFormat = formatLatex

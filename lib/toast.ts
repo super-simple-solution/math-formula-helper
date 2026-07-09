@@ -37,6 +37,7 @@ const toastStyleMap: Record<ToastType, { bg: string; border: string; color: stri
 
 type ToastMessage = { text: string; type?: ToastType }
 
+// Shows a short-lived isolated toast from the content script or extension UI.
 export function toast({ text, type = ToastType.Success }: ToastMessage) {
   if (!text || typeof document === 'undefined') return
 
@@ -58,6 +59,7 @@ export function toast({ text, type = ToastType.Success }: ToastMessage) {
   }, toastConfig.duration)
 }
 
+// Creates or reuses a Shadow DOM container so page CSS cannot break extension toasts.
 function getToastContainer() {
   const existing = document.querySelector(`[${toastRootAttr}="true"]`)
   const existingRoot = existing?.shadowRoot?.querySelector('.toast-container')

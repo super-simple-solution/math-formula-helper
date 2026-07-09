@@ -34,6 +34,7 @@ import {
   environmentPolicyList,
   FormSchema,
   historyValueList,
+  isNormalizationDetailEnabled,
   latexDemo,
   normalizationList,
   outputProfileList,
@@ -41,6 +42,7 @@ import {
   tagPolicyList,
 } from './const'
 
+// Renders the options page form that writes all copy/normalization preferences.
 export function Preference() {
   const [prefer, setPrefer] = useState<Prefer>()
 
@@ -61,6 +63,8 @@ export function Preference() {
     values: prefer,
   })
   const watchedOutputProfile = form.watch('output_profile') ?? defaultOutputProfile
+  const watchedNormalization = form.watch('normalization') ?? defaultNormalization
+  const normalizationDetailsEnabled = isNormalizationDetailEnabled(watchedNormalization)
 
   useEffect(() => {
     getPreference().then((res) => {
@@ -68,6 +72,7 @@ export function Preference() {
     })
   }, [])
 
+  // Persists validated preference form values to extension sync storage.
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     await setPreference(data)
     toast({
@@ -75,6 +80,7 @@ export function Preference() {
     })
   }
 
+  // Shows how Auto or explicit delimiter choices wrap the sample formula.
   function getSymbolPreview(symbol: LatexSymbol) {
     const resolvedSymbol =
       symbol === LatexSymbol.Auto
@@ -197,99 +203,170 @@ export function Preference() {
                       ))}
                     </RadioGroup>
                   </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="tag_policy"
-              render={({ field }) => (
-                <FormItem className="rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Tags And Labels</FormLabel>
-                    <FormDescription>Control \\tag, \\label, \\notag and \\nonumber.</FormDescription>
+                  <div className="mt-4 border-t pt-4">
+                    <div className="space-y-0.5">
+                      <div className="font-medium text-sm">Cleanup Details</div>
+                      <FormDescription>
+                        Tags and labels, environments, and redundant braces refine Normalize
+                        LaTeX. Original Text keeps parsed source, so these controls are inactive.
+                      </FormDescription>
+                    </div>
+                    <div className="mt-3 grid gap-4 lg:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="tag_policy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="space-y-0.5">
+                              <FormLabel>Tags And Labels</FormLabel>
+                              <FormDescription>
+                                Control \\tag, \\label, \\notag and \\nonumber.
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <RadioGroup onValueChange={field.onChange} value={field.value}>
+                                {tagPolicyList.map((item) => {
+                                  const id = `tag-policy-${item.value}`
+                                  return (
+                                    <div
+                                      key={item.value}
+                                      className={`flex w-full items-start gap-3 rounded-sm px-2 py-2 ${
+                                        normalizationDetailsEnabled
+                                          ? 'cursor-pointer hover:bg-muted'
+                                          : 'cursor-not-allowed opacity-60'
+                                      }`}
+                                    >
+                                      <RadioGroupItem
+                                        value={item.value}
+                                        id={id}
+                                        className="mt-1"
+                                        disabled={!normalizationDetailsEnabled}
+                                      />
+                                      <Label
+                                        className={
+                                          normalizationDetailsEnabled
+                                            ? 'cursor-pointer'
+                                            : 'cursor-not-allowed'
+                                        }
+                                        htmlFor={id}
+                                      >
+                                        <div>{item.title}</div>
+                                        <div className="text-muted-foreground text-xs">
+                                          {item.desc}
+                                        </div>
+                                      </Label>
+                                    </div>
+                                  )
+                                })}
+                              </RadioGroup>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="environment_policy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="space-y-0.5">
+                              <FormLabel>Environments</FormLabel>
+                              <FormDescription>
+                                Control equation, align, gather and multline wrappers.
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <RadioGroup onValueChange={field.onChange} value={field.value}>
+                                {environmentPolicyList.map((item) => {
+                                  const id = `environment-policy-${item.value}`
+                                  return (
+                                    <div
+                                      key={item.value}
+                                      className={`flex w-full items-start gap-3 rounded-sm px-2 py-2 ${
+                                        normalizationDetailsEnabled
+                                          ? 'cursor-pointer hover:bg-muted'
+                                          : 'cursor-not-allowed opacity-60'
+                                      }`}
+                                    >
+                                      <RadioGroupItem
+                                        value={item.value}
+                                        id={id}
+                                        className="mt-1"
+                                        disabled={!normalizationDetailsEnabled}
+                                      />
+                                      <Label
+                                        className={
+                                          normalizationDetailsEnabled
+                                            ? 'cursor-pointer'
+                                            : 'cursor-not-allowed'
+                                        }
+                                        htmlFor={id}
+                                      >
+                                        <div>{item.title}</div>
+                                        <div className="text-muted-foreground text-xs">
+                                          {item.desc}
+                                        </div>
+                                      </Label>
+                                    </div>
+                                  )
+                                })}
+                              </RadioGroup>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="brace_policy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="space-y-0.5">
+                              <FormLabel>Redundant Braces</FormLabel>
+                              <FormDescription>
+                                Control cleanup for publisher-generated brace groups.
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <RadioGroup onValueChange={field.onChange} value={field.value}>
+                                {bracePolicyList.map((item) => {
+                                  const id = `brace-policy-${item.value}`
+                                  return (
+                                    <div
+                                      key={item.value}
+                                      className={`flex w-full items-start gap-3 rounded-sm px-2 py-2 ${
+                                        normalizationDetailsEnabled
+                                          ? 'cursor-pointer hover:bg-muted'
+                                          : 'cursor-not-allowed opacity-60'
+                                      }`}
+                                    >
+                                      <RadioGroupItem
+                                        value={item.value}
+                                        id={id}
+                                        className="mt-1"
+                                        disabled={!normalizationDetailsEnabled}
+                                      />
+                                      <Label
+                                        className={
+                                          normalizationDetailsEnabled
+                                            ? 'cursor-pointer'
+                                            : 'cursor-not-allowed'
+                                        }
+                                        htmlFor={id}
+                                      >
+                                        <div>{item.title}</div>
+                                        <div className="text-muted-foreground text-xs">
+                                          {item.desc}
+                                        </div>
+                                      </Label>
+                                    </div>
+                                  )
+                                })}
+                              </RadioGroup>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} value={field.value}>
-                      {tagPolicyList.map((item) => {
-                        const id = `tag-policy-${item.value}`
-                        return (
-                          <div
-                            key={item.value}
-                            className="flex w-full cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-muted"
-                          >
-                            <RadioGroupItem value={item.value} id={id} className="mt-1" />
-                            <Label className="cursor-pointer" htmlFor={id}>
-                              <div>{item.title}</div>
-                              <div className="text-muted-foreground text-xs">{item.desc}</div>
-                            </Label>
-                          </div>
-                        )
-                      })}
-                    </RadioGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="environment_policy"
-              render={({ field }) => (
-                <FormItem className="rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Environments</FormLabel>
-                    <FormDescription>Control equation, align, gather and multline wrappers.</FormDescription>
-                  </div>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} value={field.value}>
-                      {environmentPolicyList.map((item) => {
-                        const id = `environment-policy-${item.value}`
-                        return (
-                          <div
-                            key={item.value}
-                            className="flex w-full cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-muted"
-                          >
-                            <RadioGroupItem value={item.value} id={id} className="mt-1" />
-                            <Label className="cursor-pointer" htmlFor={id}>
-                              <div>{item.title}</div>
-                              <div className="text-muted-foreground text-xs">{item.desc}</div>
-                            </Label>
-                          </div>
-                        )
-                      })}
-                    </RadioGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="brace_policy"
-              render={({ field }) => (
-                <FormItem className="rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Redundant Braces</FormLabel>
-                    <FormDescription>Control cleanup for publisher-generated brace groups.</FormDescription>
-                  </div>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} value={field.value}>
-                      {bracePolicyList.map((item) => {
-                        const id = `brace-policy-${item.value}`
-                        return (
-                          <div
-                            key={item.value}
-                            className="flex w-full cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-muted"
-                          >
-                            <RadioGroupItem value={item.value} id={id} className="mt-1" />
-                            <Label className="cursor-pointer" htmlFor={id}>
-                              <div>{item.title}</div>
-                              <div className="text-muted-foreground text-xs">{item.desc}</div>
-                            </Label>
-                          </div>
-                        )
-                      })}
-                    </RadioGroup>
-                  </FormControl>
                 </FormItem>
               )}
             />
@@ -346,7 +423,9 @@ export function Preference() {
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <div className="space-y-0.5">
                     <FormLabel>Show Source Quality</FormLabel>
-                    <FormDescription>Include source and quality in copy toasts and history.</FormDescription>
+                    <FormDescription>
+                      Include source, quality, and fallback warnings in copy toasts and history.
+                    </FormDescription>
                   </div>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />

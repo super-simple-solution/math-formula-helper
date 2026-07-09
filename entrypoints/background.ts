@@ -17,9 +17,9 @@ export default defineBackground(() => {
     'convert-tex-to-local-mathml': convertTexToLocalMathml,
   }
 
+  // Resolves optional remote selector rule metadata for the sender's domain.
   async function getPatternByDomain(params: handlerParams) {
     const { data, sendResponse } = params
-    // 修复类型错误，确保 data 是对象且有 domain 属性
     const domain =
       data && typeof data === 'object' && 'domain' in data
         ? (data as { domain?: string }).domain
@@ -27,6 +27,7 @@ export default defineBackground(() => {
     getPattern({ domain }, sendResponse)
   }
 
+  // Injects generated hover/copy CSS into the sender tab.
   function insertCSS(params: handlerParams) {
     const { data, tabId } = params
     if (typeof tabId !== 'number') return
@@ -37,6 +38,7 @@ export default defineBackground(() => {
     })
   }
 
+  // Reads TeX/MathML source from page MathJax by executing a helper in MAIN world.
   async function getMathJaxSource(params: handlerParams) {
     const { data, frameId, sendResponse, tabId } = params
     const elementId =
@@ -56,6 +58,7 @@ export default defineBackground(() => {
     }
   }
 
+  // Converts TeX to MathML using page MathJax first, then bundled MathJax as fallback.
   async function convertTexToMathJaxMathml(params: handlerParams) {
     const { frameId, sendResponse, tabId } = params
     const { tex, displayMode } = parseTexToMathmlRequest(params.data)
@@ -78,6 +81,7 @@ export default defineBackground(() => {
     }
   }
 
+  // Converts TeX to MathML with bundled MathJax only.
   async function convertTexToLocalMathml(params: handlerParams) {
     const { sendResponse } = params
     const { tex, displayMode } = parseTexToMathmlRequest(params.data)
@@ -87,6 +91,7 @@ export default defineBackground(() => {
     )
   }
 
+  // Executes the MAIN-world MathJax accessor in the sender tab and frame.
   async function runMathJaxInMainWorld(
     tabId: number,
     frameId: number | undefined,
@@ -104,6 +109,7 @@ export default defineBackground(() => {
     return result?.result || null
   }
 
+  // Lazily imports bundled MathJax conversion code inside the service worker.
   async function convertTexToMathmlInBackground(tex: string, displayMode: MathmlDisplayMode) {
     try {
       const { convertTexToMathml } = await import('@/lib/tex-to-mathml')
@@ -113,6 +119,7 @@ export default defineBackground(() => {
     }
   }
 
+  // Parses and normalizes message payloads for TeX-to-MathML conversion requests.
   function parseTexToMathmlRequest(data: handlerParams['data']) {
     const source = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
     const tex = typeof source.tex === 'string' ? source.tex : undefined
@@ -120,6 +127,7 @@ export default defineBackground(() => {
     return { tex, displayMode }
   }
 
+  // Returns the active browser tab for side panel code.
   function getActiveTab(params: handlerParams) {
     const { sendResponse } = params
     browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
@@ -132,7 +140,7 @@ export default defineBackground(() => {
 
   initEventHandler(contentReq)
   const tabSet = new Set()
-  // 点击图标打开
+  // Opens the side panel for the clicked tab and remembers that it is explicitly enabled.
   browser.action.onClicked.addListener((tab) => {
     const tabId = tab.id as number
     tabSet.add(tabId)
@@ -155,6 +163,7 @@ export default defineBackground(() => {
     disablePanel(tabId)
   })
 
+  // Keeps the side panel disabled on tabs where the user has not opened it.
   function disablePanel(tabId: number) {
     if (!tabSet.has(tabId)) {
       chrome.sidePanel.setOptions({

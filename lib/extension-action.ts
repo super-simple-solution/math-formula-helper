@@ -30,6 +30,7 @@ export type handlerParams = {
 
 export type BrowserHandler = Record<GreetingType, (params: handlerParams) => void>
 
+// Bridges content-script messages into background handlers with sender tab/frame context.
 export function initEventHandler(contentReq: Partial<BrowserHandler>) {
   browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const browserRequest = request as BrowserRequest
@@ -49,6 +50,7 @@ export function initEventHandler(contentReq: Partial<BrowserHandler>) {
   })
 }
 
+// Sends a typed extension message from content scripts to the background service worker.
 export function sendBrowserMessage(request: BrowserRequest) {
   return browser.runtime.sendMessage(request)
 }

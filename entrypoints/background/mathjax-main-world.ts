@@ -1,3 +1,4 @@
+// Runs inside the page MAIN world so extension code can access page-owned MathJax globals.
 export async function accessMathJaxInMainWorld(
   request:
     | { kind: 'source'; elementId?: string }
@@ -80,6 +81,7 @@ export async function accessMathJaxInMainWorld(
   const el = request.elementId ? document.getElementById(request.elementId) : null
   if (!el) return null
 
+  // Finds the MathJax 3/4 math item associated with a rendered target element.
   const findMathJax3Item = (doc: MathJaxDocument | undefined, target: Element) => {
     if (!doc) return null
 
@@ -100,6 +102,7 @@ export async function accessMathJaxInMainWorld(
     return null
   }
 
+  // Extracts original TeX and MathML from a MathJax 3/4 math item when available.
   const getMathJax3Source = (item: MathJaxMathItem | null) => {
     if (!item) return null
     const tex = item.inputData?.original?.tex || item.inputData?.math || item.math || null
@@ -108,6 +111,7 @@ export async function accessMathJaxInMainWorld(
     return null
   }
 
+  // Finds a MathJax v2 jax object for the rendered element or one of its child ids.
   const findMathJax2Item = () => {
     if (!mathJax.Hub?.getJaxFor) return null
 
@@ -131,6 +135,7 @@ export async function accessMathJaxInMainWorld(
   const mathml = mathJax2RootToMathml(jax.root)
   return tex || mathml ? { tex, mathml } : null
 
+  // Converts TeX using the page's MathJax runtime so site-defined macros are honored.
   async function convertTexToMathmlWithPageMathJax(texSource: string, display: boolean) {
     const tex = unwrapTexDelimiters(texSource)
     if (!tex) return null
@@ -141,6 +146,7 @@ export async function accessMathJaxInMainWorld(
     return convertTexWithMathJax2(tex, display)
   }
 
+  // Uses MathJax 3/4 tex2mml APIs, preferring the async variant when exposed.
   async function convertTexWithMathJax3(tex: string, display: boolean) {
     const options = { display }
 
@@ -163,6 +169,7 @@ export async function accessMathJaxInMainWorld(
     return null
   }
 
+  // Uses MathJax v2 TeX parser signatures and serializes the resulting MML tree.
   function convertTexWithMathJax2(tex: string, display: boolean) {
     const parse = pageMathJax.InputJax?.TeX?.Parse
     if (typeof parse !== 'function') return null
@@ -188,6 +195,7 @@ export async function accessMathJaxInMainWorld(
     return null
   }
 
+  // Accepts MathML returned either as a string or as a DOM <math> element.
   function normalizeMathmlCandidate(candidate: unknown) {
     if (typeof candidate === 'string' && /^<math[\s>]/i.test(candidate.trim())) {
       return ensureMathmlNamespace(candidate.trim())
@@ -198,6 +206,7 @@ export async function accessMathJaxInMainWorld(
     return null
   }
 
+  // Removes outer math delimiters before passing pure TeX to page MathJax.
   function unwrapTexDelimiters(source: string) {
     let value = source.trim()
     if (!value) return ''
@@ -219,6 +228,7 @@ export async function accessMathJaxInMainWorld(
     return value
   }
 
+  // Wraps a serialized MathJax v2 root in <math> when the root is not already complete MathML.
   function mathJax2RootToMathml(root?: MathJax2MmlNode) {
     if (!root) return null
     const serialized = serializeMathJax2Node(root)
@@ -227,11 +237,13 @@ export async function accessMathJaxInMainWorld(
     return `<math xmlns="http://www.w3.org/1998/Math/MathML">${serialized}</math>`
   }
 
+  // Adds the MathML namespace to a root <math> tag when the page runtime omitted it.
   function ensureMathmlNamespace(mathml: string) {
     if (/^<math\b[^>]*\sxmlns=/i.test(mathml)) return mathml
     return mathml.replace(/^<math\b/i, '<math xmlns="http://www.w3.org/1998/Math/MathML"')
   }
 
+  // Serializes a MathJax v2 MML node subset into MathML understood by Word and converters.
   function serializeMathJax2Node(node: MathJax2MmlNode | string | null | undefined): string {
     if (node === null || node === undefined) return ''
     if (typeof node === 'string') return escapeMathmlText(node)
@@ -268,16 +280,19 @@ export async function accessMathJaxInMainWorld(
     return `<${tag}${attrs}>${serializeChildren(node)}</${tag}>`
   }
 
+  // Serializes all child nodes for a MathJax v2 MML node.
   function serializeChildren(node: MathJax2MmlNode) {
     return (node.data || []).map((child) => serializeMathJax2Node(child)).join('')
   }
 
+  // Serializes MathJax v2 entity nodes while preserving numeric entities.
   function serializeEntity(node: MathJax2MmlNode) {
     const raw = String(node.data?.[0] || '')
     if (/^#x[0-9a-f]+$/i.test(raw) || /^#\d+$/.test(raw)) return `&${raw};`
     return escapeMathmlText(raw)
   }
 
+  // Maps MathJax v2 internal node names to MathML tag names.
   function normalizeMathJax2TagName(type: string) {
     const tagMap: Record<string, string> = {
       msubsup: 'msubsup',
@@ -287,6 +302,7 @@ export async function accessMathJaxInMainWorld(
     return tagMap[type] || type.toLowerCase()
   }
 
+  // Emits the subset of MathJax v2 attributes that are safe and useful in MathML output.
   function serializeMathJax2Attrs(node: MathJax2MmlNode) {
     const attrNames = [
       'mathvariant',
@@ -317,6 +333,7 @@ export async function accessMathJaxInMainWorld(
     return attrs
   }
 
+  // Escapes text nodes for MathML serialization.
   function escapeMathmlText(value: string) {
     return value
       .replace(/&/g, '&amp;')
@@ -324,6 +341,7 @@ export async function accessMathJaxInMainWorld(
       .replace(/>/g, '&gt;')
   }
 
+  // Escapes attribute values for MathML serialization.
   function escapeMathmlAttr(value: string) {
     return escapeMathmlText(value).replace(/"/g, '&quot;')
   }

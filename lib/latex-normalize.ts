@@ -7,10 +7,13 @@ import {
   TagPolicy,
   type ResolvedLatexFormatOptions,
 } from './latex-options'
+import { unwrapOuterMathDelimiters } from './latex-delimiters'
 
+// Runs the full LaTeX cleanup pipeline for a resolved output target.
 export function normalizeLatexContent(content: string, options: ResolvedLatexFormatOptions): string {
-  let res = decodeLatexEntities(stripExistingMathDelimiters(content.trim()))
+  let res = decodeLatexEntities(unwrapOuterMathDelimiters(content))
 
+  // Original is an explicit "no cleanup" mode: keep source structure after entity/delimiter trim.
   if (options.normalization === NormalizationType.Original) return res.trim()
 
   const isInline = options.format_signs === LatexSymbol.Inline
@@ -102,6 +105,7 @@ export function normalizeLatexContent(content: string, options: ResolvedLatexFor
   return normalizeLatexWhitespace(res, options.normalization === NormalizationType.KaTex).trim()
 }
 
+// Converts common HTML entities and Unicode math symbols into portable LaTeX tokens.
 function decodeLatexEntities(content: string) {
   return normalizeLatexUnicodeSymbols(
     content
@@ -117,6 +121,7 @@ function decodeLatexEntities(content: string) {
   )
 }
 
+// Rewrites single-character math glyphs that commonly appear in copied text.
 function normalizeLatexUnicodeSymbols(content: string) {
   const symbolMap: Record<string, string> = {
     '×': '\\times',
@@ -141,23 +146,7 @@ function normalizeLatexUnicodeSymbols(content: string) {
     .join('')
 }
 
-function stripExistingMathDelimiters(content: string) {
-  const trimmed = content.trim()
-  const delimiterPairs = [
-    [/^\$\$([\s\S]*)\$\$$/, '$$'],
-    [/^\\\[([\s\S]*)\\\]$/, '\\[\\]'],
-    [/^\\\(([\s\S]*)\\\)$/, '\\(\\)'],
-    [/^\$([\s\S]*)\$$/, '$'],
-  ] as const
-
-  for (const [pattern] of delimiterPairs) {
-    const match = trimmed.match(pattern)
-    if (match) return match[1].trim()
-  }
-
-  return content
-}
-
+// Removes complete begin/end wrappers while preserving the environment body.
 function unwrapLatexEnvironments(content: string, envNames: string[]) {
   return envNames.reduce(
     (source, envName) =>
@@ -166,6 +155,7 @@ function unwrapLatexEnvironments(content: string, envNames: string[]) {
   )
 }
 
+// Rewrites display-only environments into inline-safe inner environments such as aligned.
 function convertLatexEnvironment(content: string, envNames: string[], targetEnv: string) {
   return envNames.reduce(
     (source, envName) =>
@@ -177,11 +167,13 @@ function convertLatexEnvironment(content: string, envNames: string[], targetEnv:
   )
 }
 
+// Builds a global regex for one exact LaTeX environment name.
 function environmentPattern(envName: string) {
   const escaped = escapeRegExp(envName)
   return new RegExp(`\\\\begin\\{${escaped}\\}([\\s\\S]*?)\\\\end\\{${escaped}\\}`, 'g')
 }
 
+// Drops commands such as \notag that do not take an explicit argument group.
 function removeLatexCommandsWithoutArgs(content: string, commandNames: string[]) {
   const names = new Set(commandNames)
   let result = ''
@@ -206,6 +198,7 @@ function removeLatexCommandsWithoutArgs(content: string, commandNames: string[])
   return result
 }
 
+// Drops commands such as \tag{...} or \label{...} together with their first braced argument.
 function removeLatexCommandsWithOneArg(content: string, commandNames: string[]) {
   const names = new Set(commandNames)
   let result = ''
@@ -235,6 +228,7 @@ function removeLatexCommandsWithOneArg(content: string, commandNames: string[]) 
   return result
 }
 
+// Known command arities let brace cleanup keep required macro arguments intact.
 const commandArgCounts: Record<string, number> = {
   frac: 2,
   dfrac: 2,
@@ -280,12 +274,15 @@ const commandArgCounts: Record<string, number> = {
   cite: 1,
 }
 
+// Text-like commands preserve inner spacing and braces because they are user-visible text.
 const preserveCommandArgs = new Set(['text', 'textrm', 'textit', 'textbf', 'textnormal', 'mbox'])
 
+// Entry point for redundant-brace cleanup after tag/environment policies have already run.
 function collapseRedundantBraceGroups(content: string) {
   return normalizeBraceSegment(content).trim()
 }
 
+// Walks a LaTeX fragment and recursively removes only groups that are syntactically safe.
 function normalizeBraceSegment(content: string) {
   let result = ''
   let pendingCommand: { count: number; preserve: boolean } | null = null
@@ -381,6 +378,7 @@ function normalizeBraceSegment(content: string) {
   return result
 }
 
+// Decides whether a standalone group is redundant without changing command arguments or scripts.
 function shouldUnwrapBraceGroup(content: string) {
   if (!content) return true
   if (/^[a-zA-Z0-9]$/.test(content)) return true
@@ -389,6 +387,7 @@ function shouldUnwrapBraceGroup(content: string) {
   return false
 }
 
+// Reads a balanced {...} or [...] group while ignoring escaped delimiters.
 function readBalancedGroup(content: string, start: number, open: string, close: string) {
   if (content[start] !== open) return null
 
@@ -411,6 +410,7 @@ function readBalancedGroup(content: string, start: number, open: string, close: 
   return null
 }
 
+// Reads a LaTeX command token, including one-character commands and starred command names.
 function readLatexCommand(content: string, start: number) {
   if (content[start] !== '\\') return null
   const next = content[start + 1]
@@ -437,6 +437,7 @@ function readLatexCommand(content: string, start: number) {
   }
 }
 
+// Normalizes whitespace differently for compact KaTeX output and document-like output.
 function normalizeLatexWhitespace(content: string, compact: boolean) {
   if (compact) {
     const protectedContent = protectPreservedCommandArgs(content)
@@ -457,6 +458,7 @@ function normalizeLatexWhitespace(content: string, compact: boolean) {
     .replace(/[ \t]{2,}/g, ' ')
 }
 
+// Temporarily replaces text command arguments so compact whitespace cleanup cannot alter prose.
 function protectPreservedCommandArgs(content: string) {
   const values: string[] = []
   let result = ''
@@ -492,6 +494,7 @@ function protectPreservedCommandArgs(content: string) {
   return { content: result, values }
 }
 
+// Escapes user-provided environment names before embedding them in a regular expression.
 function escapeRegExp(content: string) {
   return content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

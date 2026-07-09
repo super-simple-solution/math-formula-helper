@@ -93,6 +93,7 @@ export type ResolvedLatexFormatOptions = {
   brace_policy: BracePolicy
 }
 
+// Output profile owns the default delimiter and cleanup mode for every Auto option.
 const profileDefaults: Record<
   OutputProfile,
   { format_signs: ConcreteLatexSymbol; normalization: ConcreteNormalizationType }
@@ -119,10 +120,12 @@ const profileDefaults: Record<
   },
 }
 
+// Returns the profile defaults used when a saved preference points to an unknown target.
 export function getOutputProfileDefaults(profile: OutputProfile) {
   return profileDefaults[profile] ?? profileDefaults[defaultOutputProfile]
 }
 
+// Resolves the final delimiter wrapper, using formula display mode before profile fallback.
 function resolveLatexSymbol(
   profile: OutputProfile,
   formatSigns?: LatexSymbol,
@@ -141,6 +144,7 @@ function resolveLatexSymbol(
   return getOutputProfileDefaults(profile).format_signs
 }
 
+// Resolves the final normalization engine; Auto follows the selected output profile.
 function resolveNormalization(
   profile: OutputProfile,
   normalization?: NormalizationType,
@@ -149,6 +153,7 @@ function resolveNormalization(
   return getOutputProfileDefaults(profile).normalization
 }
 
+// Converts partial UI/storage preferences into concrete formatting decisions for one copy action.
 export function resolveLatexFormatOptions(
   prefer: LatexFormatOptions,
   context: LatexFormatContext = {},

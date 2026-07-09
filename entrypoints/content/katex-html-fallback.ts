@@ -1,3 +1,4 @@
+// Reconstructs simple LaTeX from KaTeX HTML when semantic annotations are missing.
 export function katexHtmlToLatex(el: HTMLElement) {
   const htmlEl = (
     el.classList.contains('katex-html') ? el : el.querySelector('.katex-html')
@@ -8,6 +9,7 @@ export function katexHtmlToLatex(el: HTMLElement) {
   return cleanKatexLatex(parseKatexChildren(htmlEl))
 }
 
+// Recovers the most likely TeX substring from visible KaTeX text fallback.
 export function recoverLatexFromKatexText(content: string) {
   const reg1 = /\s+[^\s\n]{1}[\s|\n][\s|\n]/g
   const reg2 = /\\begin{.+?end{\w+?}$/
@@ -22,6 +24,7 @@ export function recoverLatexFromKatexText(content: string) {
   return refinedContent
 }
 
+// Serializes renderable KaTeX child nodes while attaching later script nodes to their base.
 function parseKatexChildren(parent: HTMLElement) {
   let latex = ''
   let previousRenderable: HTMLElement | null = null
@@ -46,6 +49,7 @@ function parseKatexChildren(parent: HTMLElement) {
   return latex || parseKatexText(parent.textContent || '')
 }
 
+// Converts one KaTeX HTML node into an approximate LaTeX token or group.
 function parseKatexNode(el: HTMLElement): string {
   if (isIgnoredKatexNode(el)) return ''
 
@@ -78,6 +82,7 @@ function parseKatexNode(el: HTMLElement): string {
   return parseKatexText(el.textContent || '')
 }
 
+// Reconstructs simple KaTeX tables as cases environments.
 function parseKatexTable(el: HTMLElement) {
   const columns = Array.from(el.querySelectorAll<HTMLElement>(':scope > .col-align-l')).map(
     parseKatexTableColumn,
@@ -97,6 +102,7 @@ function parseKatexTable(el: HTMLElement) {
   return `\\begin{cases} ${rows.join(' \\\\ ')} \\end{cases}`
 }
 
+// Reads a KaTeX table column from vertically-positioned row spans.
 function parseKatexTableColumn(el: HTMLElement) {
   return Array.from(
     el.querySelectorAll<HTMLElement>(':scope > .vlist-t .vlist-r:first-child > .vlist > span'),
@@ -109,16 +115,19 @@ function parseKatexTableColumn(el: HTMLElement) {
     .sort((a, b) => a.top - b.top)
 }
 
+// Extracts KaTeX's inline top offset so rows can be sorted visually.
 function getKatexTop(el: HTMLElement) {
   const match = (el.getAttribute('style') || '').match(/top:\s*(-?\d+(?:\.\d+)?)em/)
   return match ? Number(match[1]) : 0
 }
 
+// Detects KaTeX's private glyph representation for \ne.
 function isKatexNotEquals(el: HTMLElement) {
   const text = el.textContent || ''
   return text.includes('\ue020') && text.includes('=')
 }
 
+// Separates superscript and subscript content based on vertical position around a base node.
 function parseKatexScripts(el: HTMLElement, reference: HTMLElement | null) {
   const scripts: { sup: string; sub: string } = { sup: '', sub: '' }
   const referenceRect = reference?.getBoundingClientRect()
@@ -157,6 +166,7 @@ function parseKatexScripts(el: HTMLElement, reference: HTMLElement | null) {
   return scripts
 }
 
+// Skips KaTeX layout-only nodes that should not appear in recovered LaTeX.
 function isIgnoredKatexNode(el: HTMLElement) {
   return (
     el.classList.contains('strut') ||
@@ -167,6 +177,7 @@ function isIgnoredKatexNode(el: HTMLElement) {
   )
 }
 
+// Maps KaTeX spacing spans back to common LaTeX spacing commands.
 function parseKatexSpace(el: HTMLElement) {
   const rawStyle = el.getAttribute('style') || ''
   if (/margin-right:\s*1(?:\.0+)?em/.test(rawStyle)) return '\\quad '
@@ -174,6 +185,7 @@ function parseKatexSpace(el: HTMLElement) {
   return ''
 }
 
+// Converts visible Unicode math text into common LaTeX commands.
 function parseKatexText(text: string) {
   const symbolMap: Record<string, string> = {
     '\u200b': '',
@@ -225,6 +237,7 @@ function parseKatexText(text: string) {
     .join('')
 }
 
+// Tidies reconstructed KaTeX fallback output before the shared formatter runs.
 function cleanKatexLatex(latex: string) {
   return latex
     .replaceAll('\u200b', '')
@@ -233,4 +246,3 @@ function cleanKatexLatex(latex: string) {
     .replace(/([([])\s+/g, '$1')
     .trim()
 }
-

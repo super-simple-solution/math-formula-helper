@@ -99,7 +99,7 @@ export const normalizationList = [
   {
     value: NormalizationType.Original,
     title: 'Original Text',
-    desc: 'Keep everything as parsed from the web.',
+    desc: 'Keep parsed source and disable cleanup details.',
   },
 ]
 
@@ -161,6 +161,11 @@ export const bracePolicyList = [
     desc: 'Collapse redundant single-token groups.',
   },
 ]
+
+// Cleanup details only run when Normalize LaTeX is not set to Original Text.
+export function isNormalizationDetailEnabled(normalization: NormalizationType) {
+  return normalization !== NormalizationType.Original
+}
 
 export const historyValueList = [
   {

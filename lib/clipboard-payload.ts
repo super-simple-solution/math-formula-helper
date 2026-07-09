@@ -14,11 +14,14 @@ export type FormulaClipboardPayload = {
   htmlFragment?: string
 }
 
+export type ClipboardWriteMode = 'rich' | 'text'
+
 export type FormulaClipboardContext = LatexFormatContext & {
   mathml?: string | null
   wordNativeTrailingSpace?: boolean
 }
 
+// Builds the text payload for every target and optional MathML HTML for Word Native copies.
 export function buildFormulaClipboardPayload(
   rawLatex: string,
   prefer: LatexFormatOptions,
@@ -40,6 +43,7 @@ export function buildFormulaClipboardPayload(
   }
 }
 
+// Normalizes MathML for clipboard HTML and appends spacing for inline Word paste behavior.
 export function normalizeMathmlForClipboard(
   mathml: string,
   displayMode: LatexDisplayMode = 'unknown',
@@ -54,14 +58,16 @@ export function normalizeMathmlForClipboard(
   return result
 }
 
+// Wraps a fragment so rich clipboard consumers receive a complete HTML document.
 export function buildHtmlClipboardDocument(fragment: string) {
   return `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`
 }
 
+// Writes rich text/html + text/plain when supported, falling back to plain text otherwise.
 export async function writeClipboardPayload(
   clipboard: Clipboard,
   payload: FormulaClipboardPayload,
-) {
+): Promise<ClipboardWriteMode> {
   if (
     payload.html &&
     typeof ClipboardItem !== 'undefined' &&
@@ -74,9 +80,10 @@ export async function writeClipboardPayload(
           'text/html': new Blob([payload.html], { type: 'text/html' }),
         }),
       ])
-      return
+      return 'rich'
     } catch {}
   }
 
   await clipboard.writeText(payload.text)
+  return 'text'
 }

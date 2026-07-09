@@ -6,6 +6,7 @@ export type MarkedSelectionFormulaTarget = SelectionFormulaTarget & {
   marker: string
 }
 
+// Marks live DOM formula roots so cloned selection fragments can find matching nodes.
 export function markSelectionTargets(
   targets: SelectionFormulaTarget[],
 ): MarkedSelectionFormulaTarget[] {
@@ -16,12 +17,14 @@ export function markSelectionTargets(
   })
 }
 
+// Removes temporary selection markers from live formula roots after copy handling finishes.
 export function unmarkSelectionTargets(targets: MarkedSelectionFormulaTarget[]) {
   for (const { replaceRoot } of targets) {
     replaceRoot.removeAttribute(copyMarkerAttr)
   }
 }
 
+// Finds the cloned formula node by marker and removes nearby script/preview companion nodes.
 export function findFormulaFragmentElement(root: HTMLElement, marker: string) {
   const fragEl = root.querySelector(
     `[${copyMarkerAttr}="${CSS.escape(marker)}"]`,
@@ -32,41 +35,48 @@ export function findFormulaFragmentElement(root: HTMLElement, marker: string) {
   return fragEl
 }
 
+// Cleans cloned selection text after formula replacement and falls back to native selection text.
 export function cleanSelectionFragmentText(root: HTMLElement, fallback: string) {
   cleanCopyMarkers(root)
   cleanTextNodes(root)
   return normalizeSelectionFragmentText(root.textContent || fallback)
 }
 
+// Cleans cloned selection HTML for rich Word Native clipboard output.
 export function cleanSelectionFragmentHtml(root: HTMLElement) {
   cleanCopyMarkers(root)
   cleanTextNodes(root)
   return root.innerHTML
 }
 
+// Decides whether inline MathML needs trailing space before the following text.
 export function shouldKeepSpaceAfterFormula(root: HTMLElement) {
   const nextText = getAdjacentText(root, 'next')
   if (!nextText) return true
   return !/^\s*[,.;:!?，。；：！？)\]}）】、]/u.test(nextText)
 }
 
+// Decides whether rich replacement needs a leading space before the formula.
 export function shouldKeepSpaceBeforeFormula(root: HTMLElement) {
   const previousText = getAdjacentText(root, 'previous')
   if (!previousText) return false
   return !/[\s([{（【]$/u.test(previousText)
 }
 
+// Removes script or preview nodes that become noise once a formula is replaced.
 function removeFormulaCompanionNodes(root: HTMLElement) {
   removeFormulaCompanionNode(root.previousSibling, 'previous')
   removeFormulaCompanionNode(root.nextSibling, 'next')
 }
 
+// Removes one adjacent companion node after skipping whitespace in the requested direction.
 function removeFormulaCompanionNode(node: Node | null, direction: 'previous' | 'next') {
   const candidate = skipWhitespaceText(node, direction)
   if (!isFormulaCompanionElement(candidate)) return
   candidate.remove()
 }
 
+// Reads the closest meaningful neighboring text around a formula fragment.
 function getAdjacentText(root: HTMLElement, direction: 'previous' | 'next') {
   let current = direction === 'next' ? root.nextSibling : root.previousSibling
 
@@ -82,6 +92,7 @@ function getAdjacentText(root: HTMLElement, direction: 'previous' | 'next') {
   return ''
 }
 
+// Skips pure-whitespace text nodes while preserving direction for adjacency checks.
 function skipWhitespaceText(node: Node | null, direction: 'previous' | 'next') {
   let current = node
   while (current?.nodeType === Node.TEXT_NODE && !current.textContent?.trim()) {
@@ -90,6 +101,7 @@ function skipWhitespaceText(node: Node | null, direction: 'previous' | 'next') {
   return current
 }
 
+// Identifies MathJax script/preview companions that should not leak into copied text.
 function isFormulaCompanionElement(node: Node | null): node is HTMLElement {
   if (!(node instanceof HTMLElement)) return false
   if (node.matches('script[type^="math/"],script[type*="math/tex"],script[type*="math/mml"]')) {
@@ -98,12 +110,14 @@ function isFormulaCompanionElement(node: Node | null): node is HTMLElement {
   return node.classList.contains('MathJax_Preview')
 }
 
+// Removes temporary copy marker attributes from cloned fragments.
 function cleanCopyMarkers(root: HTMLElement) {
   root.querySelectorAll(`[${copyMarkerAttr}]`).forEach((el) => {
     el.removeAttribute(copyMarkerAttr)
   })
 }
 
+// Collapses line breaks inside cloned text nodes without rewriting element structure.
 function cleanTextNodes(root: HTMLElement) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   const dirtyPattern = /\s*[\r\n]+\s*/g
@@ -117,6 +131,7 @@ function cleanTextNodes(root: HTMLElement) {
   }
 }
 
+// Produces plain copied text with natural spacing around replacement formulas.
 function normalizeSelectionFragmentText(text: string) {
   return text
     .replace(/\s+/g, ' ')

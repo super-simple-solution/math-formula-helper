@@ -26,7 +26,12 @@ import { LatexQueue, type Prefer, getPreference, watchPreference } from '@/lib/s
 import { toast } from '@/lib/toast'
 import * as clipboardPolyfill from 'clipboard-polyfill'
 import type { Unwatch } from 'wxt/utils/storage'
-import { describeCopyResult, type CopyResultMetadata } from './copy-result'
+import {
+  describeCopyResult,
+  getRichClipboardFallbackWarnings,
+  getWordNativeFallbackWarnings,
+  type CopyResultMetadata,
+} from './copy-result'
 import { handleContentError, runContentTask } from './util'
 
 let preferData: Prefer = {
@@ -55,10 +60,12 @@ export type ClipboardCopyMetadata = CopyResultMetadata & {
   wordNativeTrailingSpace?: boolean
 }
 
+// Returns the current resolved preference snapshot used by content-script copy operations.
 export function getPreferData() {
   return preferData
 }
 
+// Loads preferences once and subscribes to later option-page changes.
 export function watchPrefer(): Unwatch {
   initPrefer()
   try {
@@ -69,11 +76,13 @@ export function watchPrefer(): Unwatch {
   }
 }
 
+// Rewrites the current clipboard text through the browser clipboard API.
 export async function formatCopiedText() {
   const text = await clipboard.readText()
   await clipboard.writeText(text)
 }
 
+// Builds the final clipboard payload, resolving Word Native MathML when that profile needs it.
 export async function buildFormulaClipboardPayloadForCopy(
   latexContent: string,
   metadata: ClipboardCopyMetadata = {},
@@ -89,10 +98,12 @@ export async function buildFormulaClipboardPayloadForCopy(
   }
 }
 
+// Writes a prepared payload and reports whether rich HTML or plain text was accepted.
 export async function writeFormulaClipboardPayload(payload: FormulaClipboardPayload) {
-  await writeClipboardPayload(clipboard, payload)
+  return writeClipboardPayload(clipboard, payload)
 }
 
+// Requests TeX/MathML source from the page MAIN world through the background service worker.
 export async function getMathJaxSourceFromPage(elementId: string): Promise<MathJaxPageSource | null> {
   try {
     const source = await sendBrowserMessage({
@@ -112,6 +123,7 @@ export async function getMathJaxSourceFromPage(elementId: string): Promise<MathJ
   return null
 }
 
+// Formats, writes, notifies, and stores one LaTeX copy action.
 export async function copyLatex(
   latexContent: string,
   options = { text: 'Copied' },
@@ -119,13 +131,29 @@ export async function copyLatex(
 ) {
   const { mathml, payload } = await buildFormulaClipboardPayloadForCopy(latexContent, metadata)
   const content = payload.text
-  await writeFormulaClipboardPayload(payload)
+  const writeMode = await writeFormulaClipboardPayload(payload)
+  const warnings = Array.from(
+    new Set([
+      ...(metadata.warnings ?? []),
+      ...getWordNativeFallbackWarnings({
+        outputProfile: preferData.output_profile,
+        mathml,
+      }),
+      ...getRichClipboardFallbackWarnings({
+        attemptedRichClipboard: Boolean(payload.html),
+        writeMode,
+      }),
+    ]),
+  )
+  const copyMetadata = warnings.length ? { ...metadata, warnings } : metadata
+
   if (preferData.show_toast) {
     toast({
       ...options,
       text:
-        preferData.show_source_quality && metadata.sourceKind
-          ? `${options.text} (${describeCopyResult(metadata)})`
+        preferData.show_source_quality &&
+        (copyMetadata.sourceKind || copyMetadata.warnings?.length)
+          ? `${options.text} (${describeCopyResult(copyMetadata)})`
           : options.text,
     })
   }
@@ -140,14 +168,15 @@ export async function copyLatex(
     valueMode: historyValueMode,
     formatted: storesFormatted ? content : undefined,
     id: uuid(),
-    sourceKind: preferData.show_source_quality ? metadata.sourceKind : undefined,
-    quality: preferData.show_source_quality ? metadata.quality : undefined,
-    displayMode: metadata.displayMode,
+    sourceKind: preferData.show_source_quality ? copyMetadata.sourceKind : undefined,
+    quality: preferData.show_source_quality ? copyMetadata.quality : undefined,
+    displayMode: copyMetadata.displayMode,
     mathml,
-    warnings: preferData.show_source_quality ? metadata.warnings : undefined,
+    warnings: preferData.show_source_quality ? copyMetadata.warnings : undefined,
   }).catch((error) => handleContentError(error, 'save copy history'))
 }
 
+// Copies a rendered formula image when no usable text source is available.
 export async function copyLatexAsImage(
   latexBlob: Blob,
   options = { text: 'LaTeX content not found, Copied it as Image' },
@@ -162,6 +191,7 @@ export async function copyLatexAsImage(
   }
 }
 
+// Creates a transparent overlay image whose alt text carries formatted LaTeX for full-page copy.
 export function createOpacityImage(options: {
   width: number
   height: number
@@ -187,14 +217,17 @@ export function createOpacityImage(options: {
   return img
 }
 
+// Initializes the in-memory preference snapshot from extension storage.
 function initPrefer() {
   runContentTask(() => getPreference().then(setPrefer), 'load preference')
 }
 
+// Replaces the content-script preference snapshot after storage updates.
 function setPrefer(prefer: Prefer) {
   preferData = prefer
 }
 
+// Supplies MathML for Word Native copies, preferring parser-provided MathML before conversion.
 async function resolveWordNativeMathml(
   latexContent: string,
   metadata: ClipboardCopyMetadata = {},
@@ -208,6 +241,7 @@ async function resolveWordNativeMathml(
   return undefined
 }
 
+// Requests page-aware TeX-to-MathML conversion; the background handler owns local fallback.
 async function getMathJaxMathmlFromPage(
   tex: string,
   displayMode: CopyResultMetadata['displayMode'],

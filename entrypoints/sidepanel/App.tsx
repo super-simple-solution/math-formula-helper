@@ -38,10 +38,12 @@ import { formInit } from './const'
 
 type HistoryMap = Record<string, LatexHistory>
 
-function urlParse(url: string) {
+// Normalizes tab URLs so hash-only navigation shares the same copy-history bucket.
+function stripUrlHash(url: string) {
   return url.split('#')[0]
 }
 
+// Resolves the text to copy from history using the saved value mode and current preferences.
 function getHistoryCopyContent(item: LatexHistory, prefer: Prefer) {
   if (item.valueMode === HistoryValueMode.Formatted) return item.formatted || item.value
 
@@ -55,10 +57,7 @@ function getHistoryCopyContent(item: LatexHistory, prefer: Prefer) {
   return latexFormat(item.value, prefer, { displayMode: item.displayMode })
 }
 
-function getHistoryPreview(item: LatexHistory) {
-  return item.formatted || item.value
-}
-
+// Rebuilds a full clipboard payload for a history item, including Word Native MathML when possible.
 async function getHistoryClipboardPayload(
   item: LatexHistory,
   prefer: Prefer,
@@ -81,6 +80,7 @@ async function getHistoryClipboardPayload(
   }
 }
 
+// Converts a saved LaTeX history item to MathML with the extension-owned converter.
 async function convertHistoryLatexToMathml(item: LatexHistory) {
   try {
     const mathml = await sendBrowserMessage({
@@ -96,13 +96,15 @@ async function convertHistoryLatexToMathml(item: LatexHistory) {
   }
 }
 
-async function copy(payload: FormulaClipboardPayload) {
+// Writes one history payload to the clipboard and confirms the action to the user.
+async function writeHistoryClipboardPayload(payload: FormulaClipboardPayload) {
   await writeClipboardPayload(navigator.clipboard, payload)
   toast({
     text: 'Copied Successful. ✨',
   })
 }
 
+// Renders and manages the per-tab LaTeX copy history side panel.
 function SiderPanelApp() {
   const [list, setList] = useState<LatexHistory[]>([])
   const curMapRef = useRef<HistoryMap>({})
@@ -127,6 +129,7 @@ function SiderPanelApp() {
     defaultValues: formInit(),
   })
 
+  // Loads the full history queue or accepts a watched queue update.
   const getList = (list: LatexHistory[]) => {
     const promise = list.length ? Promise.resolve(list) : LatexQueue.getQueue()
     promise.then((res) => {
@@ -134,6 +137,7 @@ function SiderPanelApp() {
     })
   }
 
+  // Joins selected history entries for multi-copy actions.
   const getContent = (idList: string[]) => {
     if (!curMapRef.current) return ''
     const contentList = idList.map((id) => {
@@ -145,10 +149,12 @@ function SiderPanelApp() {
     return contentList.join(',')
   }
 
+  // Keeps current preferences in a ref so event handlers do not use stale state.
   const setPrefer = (prefer: Prefer) => {
     preferRef.current = prefer
   }
 
+  // Reads the active tab so history can be filtered to the current page.
   const getTabInfo = () => {
     return sendBrowserMessage({
       greeting: 'get-active-tab',
@@ -156,16 +162,17 @@ function SiderPanelApp() {
       const { url, id } = tab as chrome.tabs.Tab
       if (url && id) {
         tabIdRef.current = id
-        setTabUrl(urlParse(url))
+        setTabUrl(stripUrlHash(url))
       }
       return true
     })
   }
 
+  // Updates the current history filter when the active tab navigates.
   const handleTabUpdated = async (tabId: number, changeInfo: { url?: string }) => {
     if (tabId !== tabIdRef.current) return
     if (changeInfo.url) {
-      setTabUrl(urlParse(changeInfo.url))
+      setTabUrl(stripUrlHash(changeInfo.url))
     }
   }
 
@@ -194,6 +201,7 @@ function SiderPanelApp() {
     }
   }, [])
 
+  // Copies selected history rows or asks the user to select at least one.
   const copySelected = async () => {
     const { idList } = form.getValues()
     const ids = idList.filter(Boolean)
@@ -206,29 +214,28 @@ function SiderPanelApp() {
     copyLatex(ids)
   }
 
+  // Copies one history item with rich payload metadata, or multiple items as joined text.
   const copyLatex = async (idList: string[]) => {
     const singleItem = idList.length === 1 ? curMapRef.current[idList[0]] : undefined
     const payload = singleItem
       ? await getHistoryClipboardPayload(singleItem, preferRef.current)
       : { text: getContent(idList) }
-    await copy(payload)
+    await writeHistoryClipboardPayload(payload)
   }
 
+  // Removes every history item visible for the current page.
   const clearAllHistory = async () => {
-    await removeHistory(list.map((item) => item.id))
+    await LatexQueue.remove(list.map((item) => item.id))
     form.reset(formInit())
     toast({
       text: 'All the history on this page has been removed successfully.',
     })
   }
 
-  const removeHistory = async (idList: string[]) => {
-    await LatexQueue.remove(idList)
-  }
-
+  // Deletes the currently selected history rows.
   const removeSelectedHistory = () => {
     const { idList } = form.getValues()
-    removeHistory(idList)
+    LatexQueue.remove(idList)
     toast({
       text: 'Deleted successfully.',
     })
@@ -313,27 +320,26 @@ function SiderPanelApp() {
                                     />
                                   </FormControl>
                                   <FormLabel className="w-full cursor-pointer overflow-hidden pl-3 font-normal text-xs leading-6">
-                                    <span className="block truncate">{getHistoryPreview(item)}</span>
+                                    <span className="block truncate">
+                                      {item.formatted || item.value}
+                                    </span>
                                     {item.sourceKind && (
                                       <span className="block truncate text-muted-foreground">
                                         {item.sourceKind}
                                         {item.quality ? `, ${item.quality}` : ''}
                                       </span>
                                     )}
+                                    {item.warnings?.map((warning) => (
+                                      <span
+                                        key={warning}
+                                        className="block truncate text-muted-foreground"
+                                      >
+                                        {warning}
+                                      </span>
+                                    ))}
                                   </FormLabel>
                                 </div>
                                 <div className="flex flex-auto items-center justify-end">
-                                  {/* katex */}
-                                  {/* <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Info size="14" className="cursor-pointer text-gray-500" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <div className="max-w-[300px]">{item.value}</div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider> */}
                                   <Copy
                                     onClick={() => copyLatex([item.id])}
                                     className="cursor-pointer text-green-500"

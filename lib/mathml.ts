@@ -24,10 +24,12 @@ const allowedMathmlAttrs = new Set([
   'linethickness',
 ])
 
+// Normalizes a MathML string when possible, otherwise returns the trimmed original source.
 export function cleanMathml(mathml: string) {
   return normalizeMathmlRoot(mathml) || mathml.trim()
 }
 
+// Ensures the root <math> element has safe attributes, namespace, and optional display mode.
 export function normalizeMathmlRoot(
   mathml: string,
   options: {
@@ -43,6 +45,7 @@ export function normalizeMathmlRoot(
   return normalizeMathmlRootWithStringFallback(source, options)
 }
 
+// Uses DOMParser/XMLSerializer when available so unsafe attributes can be removed precisely.
 function normalizeMathmlRootWithDom(
   source: string,
   options: {
@@ -75,11 +78,13 @@ function normalizeMathmlRootWithDom(
   }
 }
 
+// Sanitizes every MathML element below the root.
 function sanitizeMathmlElementAttrs(root: Element) {
   root.querySelectorAll('*').forEach(sanitizeSingleElementAttrs)
   sanitizeSingleElementAttrs(root)
 }
 
+// Removes attributes outside the small allowlist accepted by the clipboard payload.
 function sanitizeSingleElementAttrs(node: Element) {
   for (const attr of Array.from(node.attributes)) {
     if (allowedMathmlAttrs.has(attr.name) || attr.name.startsWith('xmlns')) continue
@@ -87,6 +92,7 @@ function sanitizeSingleElementAttrs(node: Element) {
   }
 }
 
+// Adds root-only namespace/display attributes when DOM parsing is unavailable.
 function normalizeMathmlRootWithStringFallback(
   source: string,
   options: {

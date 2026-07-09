@@ -14,6 +14,7 @@ import 'mathjax-full/js/input/tex/textcomp/TextCompConfiguration.js'
 import 'mathjax-full/js/input/tex/textmacros/TextMacrosConfiguration.js'
 import 'mathjax-full/js/input/tex/unicode/UnicodeConfiguration.js'
 import 'mathjax-full/js/input/tex/upgreek/UpgreekConfiguration.js'
+import { unwrapOuterMathDelimiters } from './latex-delimiters'
 import type { LatexDisplayMode } from './latex-options'
 
 type TexMathDocument = ReturnType<typeof mathjax.document>
@@ -40,11 +41,12 @@ const texPackages = [
   'upgreek',
 ]
 
+// Converts TeX into MathML with bundled MathJax, rejecting conversion error nodes.
 export function convertTexToMathml(
   texSource: string,
   displayMode: LatexDisplayMode = 'unknown',
 ) {
-  const tex = unwrapTexDelimiters(texSource)
+  const tex = unwrapOuterMathDelimiters(texSource)
   if (!tex) return null
 
   try {
@@ -59,6 +61,7 @@ export function convertTexToMathml(
   }
 }
 
+// Lazily creates the MathJax document so background conversions share package setup.
 function getTexDocument() {
   if (texDocument) return texDocument
 
@@ -71,28 +74,8 @@ function getTexDocument() {
   return texDocument
 }
 
+// Lazily creates the serializer used to turn MathJax internal nodes into MathML strings.
 function getMmlVisitor() {
   if (!mmlVisitor) mmlVisitor = new SerializedMmlVisitor()
   return mmlVisitor
-}
-
-function unwrapTexDelimiters(source: string) {
-  let value = source.trim()
-  if (!value) return ''
-
-  const wrappers: Array<[RegExp, string]> = [
-    [/^\\\(([\s\S]*)\\\)$/u, '$1'],
-    [/^\\\[([\s\S]*)\\\]$/u, '$1'],
-    [/^\$\$([\s\S]*)\$\$$/u, '$1'],
-    [/^\$([\s\S]*)\$$/u, '$1'],
-  ]
-
-  for (const [pattern, replacement] of wrappers) {
-    if (pattern.test(value)) {
-      value = value.replace(pattern, replacement).trim()
-      break
-    }
-  }
-
-  return value
 }

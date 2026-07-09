@@ -6,6 +6,7 @@ export type SelectionFormulaTarget = {
   replaceRoot: HTMLElement
 }
 
+// Expands selection boundaries when the user starts or ends inside a formula node.
 export function expandRangeToWholeFormulas(range: Range, activeRules: Rule[]) {
   const expandedRange = range.cloneRange()
   const startTarget = findFormulaTargetFromNode(expandedRange.startContainer, activeRules)
@@ -17,6 +18,7 @@ export function expandRangeToWholeFormulas(range: Range, activeRules: Rule[]) {
   return expandedRange
 }
 
+// Collects formula nodes intersecting the selection and de-duplicates nested targets.
 export function collectSelectionFormulaTargets(range: Range, activeRules: Rule[]) {
   const targets: SelectionFormulaTarget[] = []
 
@@ -43,6 +45,7 @@ export function collectSelectionFormulaTargets(range: Range, activeRules: Rule[]
   })
 }
 
+// Resolves the formula target containing a range boundary node.
 function findFormulaTargetFromNode(node: Node, activeRules: Rule[]): SelectionFormulaTarget | null {
   const element = node instanceof Element ? node : node.parentElement
   if (!element) return null
@@ -57,6 +60,7 @@ function findFormulaTargetFromNode(node: Node, activeRules: Rule[]): SelectionFo
   return null
 }
 
+// Creates a selection target and chooses the DOM root that should be replaced in fragments.
 function createSelectionTarget(rule: Rule, el: HTMLElement): SelectionFormulaTarget {
   return {
     rule,
@@ -65,6 +69,7 @@ function createSelectionTarget(rule: Rule, el: HTMLElement): SelectionFormulaTar
   }
 }
 
+// Adds a target unless an overlapping wrapper already represents the same formula.
 function addSelectionTarget(targets: SelectionFormulaTarget[], target: SelectionFormulaTarget) {
   const existingIndex = targets.findIndex((item) =>
     areOverlappingFormulaTargets(item.replaceRoot, target.replaceRoot),
@@ -81,10 +86,12 @@ function addSelectionTarget(targets: SelectionFormulaTarget[], target: Selection
   }
 }
 
+// Checks whether two candidate formula roots overlap in the DOM tree.
 function areOverlappingFormulaTargets(a: HTMLElement, b: HTMLElement) {
   return a === b || a.contains(b) || b.contains(a)
 }
 
+// Promotes inner rendered nodes to their formula wrapper so replacement is structurally clean.
 function findSelectionReplacementRoot(el: HTMLElement) {
   const root = el.closest(
     [
@@ -115,6 +122,7 @@ function findSelectionReplacementRoot(el: HTMLElement) {
   return (root as HTMLElement | null) || el
 }
 
+// Safely checks selection intersection across browsers and detached nodes.
 function rangeIntersectsNode(range: Range, node: Node) {
   try {
     return range.intersectsNode(node)

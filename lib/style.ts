@@ -35,6 +35,7 @@ const copiedStyle = `{
   background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNjk1MTM5MjIzMTM2IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjkzMDYiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+PHBhdGggZD0iTTgwNi4wMTYgMzIwTDY0MCAxNTMuOTg0VjMyMGgxNjYuMDE2ek04MzIgMzg0aC0yNTZWMTI4SDE5MnY3NjhoNjQwVjM4NHpNMTYwIDY0aDQ4MGwyNTYgMjU2djYwOHEwIDE0LjAxNi04Ljk5MiAyMy4wMDhUODY0IDk2MEgxNjBxLTE0LjAxNiAwLTIzLjAwOC04Ljk5MlQxMjggOTI4Vjk2cTAtMTQuMDE2IDguOTkyLTIzLjAwOFQxNjAgNjR6IG0zMTguMDE2IDU4Mi4wMTZsMTgwLjk5Mi0xODAuOTkyIDQ2LjAxNiA0NC45OTItMjI3LjAwOCAyMjcuMDA4TDMyMCA1NzguMDE2bDQ0Ljk5Mi00NC45OTJ6IiBwLWlkPSI5MzA3IiBmaWxsPSIjNjdDMjNBIj48L3BhdGg+PC9zdmc+);
 }`
 
+// Builds the injected hover/copy affordance CSS for all active formula selectors.
 function generateCSS(selectorList: string[]): string {
   let cssStr = ''
   cssStr += geneClass(selectorList, '') + containerStyle
@@ -45,6 +46,7 @@ function generateCSS(selectorList: string[]): string {
   return cssStr
 }
 
+// Joins selector lists with an optional pseudo-class or copied-state suffix.
 function geneClass(classList: string[], str = ''): string {
   const len = classList.length
   return classList.reduce(

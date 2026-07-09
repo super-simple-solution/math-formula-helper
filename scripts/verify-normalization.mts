@@ -3,7 +3,16 @@ import katex from 'katex'
 import {
   buildFormulaClipboardPayload,
   normalizeMathmlForClipboard,
+  writeClipboardPayload,
 } from '../lib/clipboard-payload.ts'
+import {
+  getRichClipboardFallbackWarnings,
+  getWordNativeFallbackWarnings,
+  richClipboardWriteFallbackWarning,
+  wordNativeMathmlUnavailableWarning,
+} from '../entrypoints/content/copy-result.ts'
+import { unwrapOuterMathDelimiters } from '../lib/latex-delimiters.ts'
+import { isNormalizationDetailEnabled } from '../entrypoints/options/components/preference/const.ts'
 import { hasUnknownLatexMacros } from '../lib/latex-macros.ts'
 import {
   BracePolicy,
@@ -329,6 +338,98 @@ assert.equal(
   'standard macro detector should flag site-specific raw TeX commands',
 )
 
+assert.equal(
+  isNormalizationDetailEnabled(NormalizationType.Original),
+  false,
+  'Original Text should disable tag/environment/brace detail options',
+)
+assert.equal(
+  isNormalizationDetailEnabled(NormalizationType.Auto),
+  true,
+  'Auto normalization should keep detail options available',
+)
+assert.equal(
+  isNormalizationDetailEnabled(NormalizationType.KaTex),
+  true,
+  'KaTeX normalization should keep detail options available',
+)
+assert.equal(
+  isNormalizationDetailEnabled(NormalizationType.MathJax),
+  true,
+  'MathJax normalization should keep detail options available',
+)
+assert.equal(
+  unwrapOuterMathDelimiters(String.raw`  $x+1$  `),
+  String.raw`x+1`,
+  'outer inline dollar delimiters should unwrap and trim',
+)
+assert.equal(
+  unwrapOuterMathDelimiters(String.raw`$$x+1$$`),
+  String.raw`x+1`,
+  'outer display dollar delimiters should unwrap',
+)
+assert.equal(
+  unwrapOuterMathDelimiters(String.raw`\[x+1\]`),
+  String.raw`x+1`,
+  'outer square display delimiters should unwrap',
+)
+assert.equal(
+  unwrapOuterMathDelimiters(String.raw`\(x+1\)`),
+  String.raw`x+1`,
+  'outer paren inline delimiters should unwrap',
+)
+assert.equal(
+  unwrapOuterMathDelimiters(String.raw`  x+1  `),
+  String.raw`x+1`,
+  'unwrapped TeX should only be trimmed',
+)
+assert.deepEqual(
+  getWordNativeFallbackWarnings({
+    outputProfile: OutputProfile.WordNative,
+  }),
+  [wordNativeMathmlUnavailableWarning],
+  'Word Native copies should warn when MathML is unavailable',
+)
+assert.deepEqual(
+  getWordNativeFallbackWarnings({
+    outputProfile: OutputProfile.WordNative,
+    mathml: '<math><mi>x</mi></math>',
+  }),
+  [],
+  'Word Native copies with MathML should not warn',
+)
+assert.deepEqual(
+  getWordNativeFallbackWarnings({
+    outputProfile: OutputProfile.MarkdownKatex,
+  }),
+  [],
+  'non-Word profiles should not warn about Word Native MathML',
+)
+assert.deepEqual(
+  getRichClipboardFallbackWarnings({
+    attemptedRichClipboard: true,
+    writeMode: 'text',
+  }),
+  [richClipboardWriteFallbackWarning],
+  'rich clipboard write failures should warn when the copy falls back to plain text',
+)
+assert.deepEqual(
+  getRichClipboardFallbackWarnings({
+    attemptedRichClipboard: true,
+    writeMode: 'rich',
+  }),
+  [],
+  'rich clipboard writes should not warn when rich content was written',
+)
+assert.deepEqual(
+  getRichClipboardFallbackWarnings({
+    attemptedRichClipboard: false,
+    writeMode: 'text',
+  }),
+  [],
+  'plain text-only payloads should not warn about rich clipboard fallback',
+)
+
 const wordPayload = buildFormulaClipboardPayload(
   String.raw`x^2`,
   {
@@ -357,6 +458,39 @@ assert.equal(
   '<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><mi>x</mi></math>',
   'Inline MathML clipboard normalization should allow suppressing trailing space',
 )
+const originalClipboardItem = globalThis.ClipboardItem
+;(globalThis as unknown as { ClipboardItem?: typeof ClipboardItem }).ClipboardItem = class {
+  constructor(_items: Record<string, Blob>) {}
+} as unknown as typeof ClipboardItem
+
+let fallbackText = ''
+const fallbackWriteMode = await writeClipboardPayload(
+  {
+    write: async () => {
+      throw new Error('rich clipboard unavailable')
+    },
+    writeText: async (text: string) => {
+      fallbackText = text
+    },
+  } as unknown as Clipboard,
+  {
+    text: String.raw`x^2`,
+    html: '<math><msup><mi>x</mi><mn>2</mn></msup></math>',
+  },
+)
+assert.equal(
+  fallbackWriteMode,
+  'text',
+  'clipboard writer should report text mode when rich HTML write falls back',
+)
+assert.equal(
+  fallbackText,
+  String.raw`x^2`,
+  'clipboard writer should preserve plain LaTeX text when rich HTML write fails',
+)
+
+;(globalThis as unknown as { ClipboardItem?: typeof ClipboardItem }).ClipboardItem =
+  originalClipboardItem
 
 console.log(`verify-normalization: ${cases.length} cases passed`)
 

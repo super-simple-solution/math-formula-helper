@@ -187,6 +187,7 @@ const standardLatexMacros = new Set([
   'zeta',
 ])
 
+// Flags raw TeX that likely depends on site-specific macros and should prefer MathML conversion.
 export function hasUnknownLatexMacros(source: string) {
   const trimmed = source.trim()
   if (!trimmed || trimmed.startsWith('<math')) return false

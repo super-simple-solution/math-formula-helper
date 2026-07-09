@@ -20,8 +20,10 @@ import {
 } from './copy-result'
 import { katexHtmlToLatex, recoverLatexFromKatexText } from './katex-html-fallback'
 
+// Reads LaTeX from transparent overlay images created during full-page copy mode.
 export const ImageAltRule = {
   selectorList: ['.sss-img-latex'],
+  // Parses the overlay image alt text and marks it as a fallback source.
   parse: async (el: HTMLElement) => {
     const content = el.children[0]?.getAttribute('alt')
     return content
@@ -44,8 +46,9 @@ export type Rule = {
   post: <T extends string | Blob>(el: HTMLElement, content: T, result?: CopyResult) => Promise<void>
 }
 
+// Site/formula rules are ordered by the active primary rule and then by generic fallbacks.
 export const rules: Record<string, Rule> = {
-  //arxiv的元素结构如下
+  // Handles LaTeXML/arXiv-style elements where alttext keeps the original source.
   math_ltx: {
     testUrl: ['https://dlmf.nist.gov/5.12', 'https://arxiv.org/html/2412.11563v1'],
     selectorList: [
@@ -54,6 +57,7 @@ export const rules: Record<string, Rule> = {
       'math.ltx_Math',
       'ltx_math',
     ],
+    // Reads exact TeX from LaTeXML's alttext attribute.
     parse: async (el: HTMLElement) => {
       const content = el.getAttribute('alttext')
       return content
@@ -67,7 +71,7 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
-  // immersive translate注入的元素如下，从外到内嵌套分别是：1. <font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner">; 1.1 <tex-math>; 1.1.1 <tex-math>的子节点<div class="MathJax_Display"> 用于displaystyle，也就是单独成行的公式 1.1.2 <tex-math>的子节点<span class="MathJax">，用于行内公式。公式代码在1.1.1和1.1.2 同id的第一个的父节点的兄弟节点<script>里。如何解析？
+  // Handles Immersive Translate clones by finding the original MathJax script with the same id.
   immersive_translate: {
     testUrl: [],
     selectorList: [
@@ -75,28 +79,23 @@ export const rules: Record<string, Rule> = {
       '.immersive-translate-target-inner tex-math .MathJax',
       '.immersive-translate-target-inner .MathJax_SVG',
     ],
+    // Locates the non-translated MathJax node and reads its sibling math/tex script.
     parse: async (el: HTMLElement) => {
       const targetId = el.id
       if (!targetId) {
         return null
       }
-      // 在整个文档中查找具有相同 ID 的元素
+      // Searches the whole document because Immersive Translate clones rendered nodes.
       const candidates = document.querySelectorAll(`#${CSS.escape(targetId)}`)
       if (!candidates.length) return null
 
       for (const candidate of candidates) {
-        // 3.1 跳过自己 (即跳过 tex-math 内部的这个克隆体)
-        // if (el.contains(candidate)) {
-        //   continue;
-        // }
+        // Skips the translated clone and keeps looking for the original MathJax node.
         if (el.isConnected && el === candidate) {
           continue
         }
-        // 3.2 检查这个候选元素的“真身”环境
-        // 目标结构: <div class="MathJax_Display"><span id="目标ID">...</span></div> <script>...</script>  && (parent.classList.contains('MathJax_Display') || parent.classList.contains('MathJax'))
         const parent = candidate.parentElement
         if (parent) {
-          // 4. 核心逻辑：公式代码在父节点的兄弟 script 标签里
           if (parent.classList.contains('MathJax_Display')) {
             const script = parent.parentElement?.querySelector('script')
             if (
@@ -135,6 +134,7 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
+  // Handles MathJax-rendered formulas across CHTML, SVG, and v3/v4 mjx containers.
   math_jax: {
     testUrl: [
       'https://www.andlearning.org/math-formula/',
@@ -160,6 +160,7 @@ export const rules: Record<string, Rule> = {
       '.mjx-chtml',
       'mjx-container.MathJax',
     ],
+    // Prefers exact TeX, then page MathJax APIs, then visible-image fallback metadata.
     parse: async (el: HTMLElement) => {
       if (el.closest('.immersive-translate-target-inner')) return null
 
@@ -240,9 +241,11 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
+  // Handles KaTeX and preserved MathML nodes before falling back to site-specific recovery.
   math_ml: {
     testUrl: [],
     selectorList: ['.katex', '.katex-display', '.maruku-mathml', '.display-math', 'MJX-TEX'],
+    // Reads KaTeX annotations, MathML, data attributes, or documented site fallbacks.
     parse: async (el: HTMLElement) => {
       const annotationEl =
         el.querySelector('.katex-mathml annotation') || el.querySelector('math annotation')
@@ -341,6 +344,7 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
+  // Handles raw MathML containers and MathJax assistive MathML exposed in the DOM.
   math_jax_html: {
     testUrl: [],
     selectorList: [
@@ -354,6 +358,7 @@ export const rules: Record<string, Rule> = {
       'inline-formula',
       '.inline-formula',
     ],
+    // Converts DOM MathML to LaTeX, or uses MAIN-world MathJax source when MathML is absent.
     parse: async (el: HTMLElement) => {
       const mathEl = el.tagName.toLowerCase() === 'math' ? el : el.querySelector('math')
       if (mathEl) {
@@ -391,6 +396,7 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
+  // Handles image-backed formulas whose alt/dataset text is the only available source.
   math_img: {
     testUrl: [
       'https://zh.wikipedia.org/wiki/%E5%AF%B9%E6%95%B0%E5%BE%AE%E5%88%86%E6%B3%95',
@@ -407,6 +413,7 @@ export const rules: Record<string, Rule> = {
       '[data-attrid="formula-image"]',
       'div[data-type="formula"]:has(img[dataset-id="formula"])',
     ],
+    // Extracts alt text or Baike's dataset formula value and marks the result as fallback.
     parse: async (el: HTMLElement) => {
       let latexContent = ''
       if (pageHostMatches('baike.')) {
@@ -429,9 +436,11 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
+  // Handles Wolfram MathWorld numbered equation images, whose alt text is TexForm.
   wolfram_math_img: {
     testUrl: ['https://mathworld.wolfram.com/HilbertSpace.html'],
     selectorList: ['img.numberedequation'],
+    // Copies Wolfram's TexForm source and surfaces a warning that it is not standard LaTeX.
     parse: async (el: HTMLElement) => {
       const element = el as HTMLImageElement
       if (!element.alt) return ''
@@ -444,6 +453,7 @@ export const rules: Record<string, Rule> = {
       })
     },
     pre,
+    // Uses custom toast copy because the source language is TexForm rather than LaTeX.
     post: async <T extends string | Blob>(el: HTMLElement, content: T, result?: CopyResult) => {
       if (typeof content === 'string') {
         await copyLatex(
@@ -459,10 +469,12 @@ export const rules: Record<string, Rule> = {
   },
 }
 
+// Checks whether an element is a MathJax source script.
 function isMathScript(node: Element | null | undefined): node is HTMLScriptElement {
   return node?.tagName === 'SCRIPT' && node.getAttribute('type')?.includes('math/') === true
 }
 
+// Finds a nearby math/tex or math/mml script associated with a rendered formula element.
 function findMathScript(el: HTMLElement) {
   const directSibling = el.nextElementSibling
   if (isMathScript(directSibling)) return directSibling
@@ -477,6 +489,7 @@ function findMathScript(el: HTMLElement) {
   return null
 }
 
+// Finds MathML embedded near a rendered element through data attributes or assistive nodes.
 function findEmbeddedMathml(el: HTMLElement) {
   const dataMathml =
     el.getAttribute('data-mathml') || el.closest('[data-mathml]')?.getAttribute('data-mathml')
@@ -491,6 +504,7 @@ function findEmbeddedMathml(el: HTMLElement) {
   return rootMath?.outerHTML || null
 }
 
+// Returns sanitized embedded MathML when one is available near the rendered element.
 function getCleanEmbeddedMathml(el: HTMLElement) {
   const mathml = findEmbeddedMathml(el)
   return mathml ? cleanMathml(mathml) : undefined
@@ -503,6 +517,7 @@ type NormalizedMathSource = {
   quality: CopyQuality
 }
 
+// Normalizes page MathJax API output into one LaTeX/MathML source record.
 async function normalizeMathJaxSource(source: MathJaxPageSource): Promise<NormalizedMathSource> {
   if (typeof source === 'object') {
     const tex = typeof source.tex === 'string' ? source.tex : ''
@@ -546,6 +561,7 @@ async function normalizeMathJaxSource(source: MathJaxPageSource): Promise<Normal
   }
 }
 
+// Converts MathML to LaTeX with the content-script MathML converter and keeps cleaned MathML.
 async function convertMathml(mathml: string): Promise<NormalizedMathSource> {
   await initMathml()
   const cleanedMathml = cleanMathml(mathml)
@@ -559,6 +575,7 @@ async function convertMathml(mathml: string): Promise<NormalizedMathSource> {
 
 let cachedPageHosts: string[] | null = null
 
+// Collects hostnames from the current URL and canonical metadata for saved/local pages.
 function getPageHosts() {
   if (cachedPageHosts) return cachedPageHosts
 
@@ -582,17 +599,21 @@ function getPageHosts() {
   return cachedPageHosts
 }
 
+// Matches exact, subdomain, and canonical-host aliases used by site-specific rules.
 function pageHostMatches(domain: string) {
   return getPageHosts().some(
     (host) => host === domain || host.endsWith(`.${domain}`) || host.includes(domain),
   )
 }
 
+// Ensures rendered formula nodes can be addressed from MAIN-world MathJax lookups.
 function ensureElementId(el: HTMLElement) {
   if (el.id) return el.id
   el.id = `sss-math-${crypto.randomUUID()}`
   return el.id
 }
+
+// Applies source-level cleanup before the shared formatting pipeline runs.
 function pre<T extends string | Blob>(content: T): T {
   if (typeof content === 'string') {
     return refineLatexSource(content) as T
@@ -600,6 +621,7 @@ function pre<T extends string | Blob>(content: T): T {
   return content
 }
 
+// Performs the default copy side effect for text or image content and marks the element copied.
 async function post<T extends string | Blob>(el: HTMLElement, content: T, result?: CopyResult) {
   if (!content) return
   let copyPromise: Promise<void>

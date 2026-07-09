@@ -19,6 +19,7 @@ import {
 } from './selection-fragment'
 import { collectSelectionFormulaTargets, expandRangeToWholeFormulas } from './selection-targets'
 
+// Replaces formulas inside a mixed text selection with formatted LaTeX or Word MathML.
 export async function handleMixedCopy(e: ClipboardEvent, activeRules: Rule[]) {
   const preferData = getPreferData()
   if (!preferData.selection_copy) return

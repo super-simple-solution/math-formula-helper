@@ -24,6 +24,7 @@ let visibilityWatcherInited = false
 let canCopyAll = false
 let primaryRule: CopyRule | undefined
 
+// Starts the content script once the page is visible and retries after visibility changes.
 export function latexInit() {
   if (!visibilityWatcherInited) {
     visibilityWatcherInited = true
@@ -37,6 +38,7 @@ export function latexInit() {
   runContentTask(init(), 'initial init')
 }
 
+// Resolves rules, injects hover styles, and attaches click/copy listeners.
 async function init() {
   if (inited || document.visibilityState === 'hidden') return
 
@@ -55,6 +57,7 @@ async function init() {
   document.body.addEventListener('click', handleFormulaClick, true)
 }
 
+// Picks a remote-configured primary rule when available, otherwise uses the first matching rule.
 async function resolvePrimaryRule(): Promise<CopyRule | undefined> {
   let ruleKey = ''
 
@@ -75,6 +78,7 @@ async function resolvePrimaryRule(): Promise<CopyRule | undefined> {
   return ruleList.find((item) => findFirstMatch(item))
 }
 
+// Injects CSS for every known formula selector through the background script.
 function insertRuleStyles() {
   runContentTask(
     () => sendBrowserMessage({
@@ -85,6 +89,7 @@ function insertRuleStyles() {
   )
 }
 
+// Checks whether a rule has at least one valid selector match on the current page.
 function findFirstMatch(rule: CopyRule): HTMLElement | null {
   try {
     return document.querySelector(rule.selectorList.join(',')) as HTMLElement | null
@@ -93,6 +98,7 @@ function findFirstMatch(rule: CopyRule): HTMLElement | null {
   }
 }
 
+// Finds the first active rule whose selector contains the event target.
 function findMatchingRule(target: Element, activeRules: CopyRule[]): FormulaTarget | undefined {
   for (const curRule of activeRules) {
     try {
@@ -102,6 +108,7 @@ function findMatchingRule(target: Element, activeRules: CopyRule[]): FormulaTarg
   }
 }
 
+// Handles direct formula clicks and routes the matched element through its parser.
 function handleFormulaClick(e: MouseEvent) {
   if (canCopyAll) return
   if (!(e.target instanceof Element)) return
@@ -113,6 +120,7 @@ function handleFormulaClick(e: MouseEvent) {
   runContentTask(copyByRule(match.rule, match.el), 'copy formula')
 }
 
+// Parses a formula with its rule, refines the source, and delegates the rule's post-copy action.
 async function copyByRule(curRule: CopyRule, el: HTMLElement) {
   const res = toCopyResult(await curRule.parse(el), { displayMode: 'unknown' })
   if (!res) return
@@ -126,6 +134,7 @@ async function copyByRule(curRule: CopyRule, el: HTMLElement) {
   }
 }
 
+// Registers keyboard, scroll, and mixed-selection copy handlers.
 function eventInit() {
   hotkeys('shift+up,esc', (_, handler) => {
     switch (handler.key) {
@@ -156,11 +165,13 @@ function eventInit() {
   })
 }
 
+// Enables full-page copy by rendering transparent images over visible formulas.
 async function enterFullPageCopy() {
   canCopyAll = true
   await renderFormulaOverlays()
 }
 
+// Removes full-page overlay artifacts and restores formula nodes after Esc.
 function exitFullPageCopy() {
   canCopyAll = false
 
@@ -171,6 +182,7 @@ function exitFullPageCopy() {
   })
 }
 
+// Creates transparent overlay images whose alt text carries formatted formula source.
 async function renderFormulaOverlays() {
   const targets = collectFormulaTargets()
 
@@ -211,6 +223,7 @@ async function renderFormulaOverlays() {
   }
 }
 
+// Collects formula nodes for full-page overlay mode, prioritizing the page's primary rule.
 function collectFormulaTargets(): FormulaTarget[] {
   const result: FormulaTarget[] = []
   const seen = new Set<Element>()
@@ -239,6 +252,7 @@ function collectFormulaTargets(): FormulaTarget[] {
   return result
 }
 
+// Filters out hidden or unmeasurable rendered formula nodes.
 function isVisible(el: HTMLElement) {
   const rect = el.getBoundingClientRect()
   return rect.width > 0 && rect.height > 0
