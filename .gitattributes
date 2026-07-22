@@ -1,0 +1,22 @@
+# Auto-normalize line endings for all text files
+* text=auto
+
+# Prisma generated code — keep LF stable to avoid noisy diffs
+src/shared/@generated/** text eol=lf
+
+# Force LF for config/schema files that are sensitive to line endings
+*.prisma text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

@@ -1,6 +1,6 @@
 import './style.css'
-import { sendBrowserMessage } from '@/lib/extension-action'
 import hotkeys from 'hotkeys-js'
+import { sendBrowserMessage } from '@/lib/extension-action'
 import { ImageAltRule, type Rule, rules } from './const'
 import { createOpacityImage, formatCopiedText, initClipboard } from './util'
 
@@ -25,7 +25,9 @@ async function init(isReset: boolean) {
   if (ruleKey) {
     state.rule = rules[ruleKey as string]
   } else {
-    state.rule = Object.values(rules).find((item) => document.querySelector(item.selectorList.join()))
+    state.rule = Object.values(rules).find((item) =>
+      document.querySelector(item.selectorList.join()),
+    )
   }
   if (state.count >= MAX_RETRIES) return
   state.count++
