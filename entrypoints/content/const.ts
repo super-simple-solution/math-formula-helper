@@ -56,6 +56,15 @@ export const rules: Record<string, Rule> = {
     pre,
     post,
   },
+  math_role: {
+    testUrl: [],
+    selectorList: ['[role=math]'],
+    parse: async (el: HTMLElement) => {
+      return el.getAttribute('aria-label')
+    },
+    pre,
+    post,
+  },
   math_ml: {
     testUrl: [],
     selectorList: ['.katex', '.maruku-mathml'],

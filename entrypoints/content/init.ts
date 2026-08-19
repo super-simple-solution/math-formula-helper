@@ -21,7 +21,6 @@ async function init(isReset: boolean) {
       domain: location.hostname,
     },
   })
-  console.log(ruleKey, 'ruleKey')
   if (ruleKey) {
     state.rule = rules[ruleKey as string]
   } else {
