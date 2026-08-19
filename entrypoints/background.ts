@@ -44,12 +44,12 @@ export default defineBackground(() => {
   browser.action.onClicked.addListener((tab) => {
     const tabId = tab.id as number
     tabSet.add(tabId)
-    chrome.sidePanel.setOptions({
+    browser.sidePanel.setOptions({
       tabId,
       path: 'sidepanel.html',
       enabled: true,
     })
-    chrome.sidePanel.open({
+    browser.sidePanel.open({
       tabId: tab.id as number,
     })
   })
@@ -65,7 +65,7 @@ export default defineBackground(() => {
 
   function disablePanel(tabId: number) {
     if (!tabSet.has(tabId)) {
-      chrome.sidePanel.setOptions({
+      browser.sidePanel.setOptions({
         enabled: false,
       })
     }

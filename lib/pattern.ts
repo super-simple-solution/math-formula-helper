@@ -1,5 +1,5 @@
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
+const supabaseUrl = import.meta.env.WXT_SUPABASE_URL
+const supabaseKey = import.meta.env.WXT_SUPABASE_KEY
 import { getPattern as getPatternStorage, setPattern } from "./storage"
 import type { Pattern, PatternCache } from "./storage/types"
 

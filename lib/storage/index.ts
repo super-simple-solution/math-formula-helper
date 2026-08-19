@@ -26,6 +26,7 @@ const MAX_LENGTH = 200
 export const LatexQueue = {
   async enqueue(item: LatexHistory): Promise<void> {
     const current = await this.getQueue()
+    if (current.some(h => h.value === item.value)) return
     await storage.setItem<LatexHistory[]>(LATEX_HISTORY, [...current, item].slice(-MAX_LENGTH))
   },
 
