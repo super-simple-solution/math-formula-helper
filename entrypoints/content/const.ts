@@ -157,6 +157,9 @@ export const rules: Record<string, Rule> = {
           return svgToImage(svgEl)
         }
       } else {
+        if (mathEl.getAttribute('data-latex')) {
+          return mathEl.getAttribute('data-latex')
+        }
         return initMathml().then(() => {
           const latexContent = window.Mathml2latex.convert(mathEl.outerHTML)
           return latexContent
